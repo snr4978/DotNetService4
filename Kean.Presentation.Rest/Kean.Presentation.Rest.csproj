@@ -1,0 +1,44 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+		<UserSecretsId>d7960ba5-60ec-4883-9f14-7dff1eb780f0</UserSecretsId>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+	  <DocumentationFile>D:\Projects\.Templates\DotNet DDD\Kean.Presentation.Rest\Swagger.xml</DocumentationFile>
+	  <NoWarn>1573;1591;1701;1702</NoWarn>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Compile Remove="logs\**" />
+		<Content Remove="logs\**" />
+		<EmbeddedResource Remove="logs\**" />
+		<None Remove="logs\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="EPPlus" Version="5.8.5" />
+		<PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="10.0.1" />
+		<PackageReference Include="Serilog.AspNetCore" Version="4.1.0" />
+		<PackageReference Include="Serilog.Sinks.Async" Version="1.5.0" />
+		<PackageReference Include="Serilog.Sinks.Elasticsearch" Version="8.4.1" />
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Kean.Application.Command\Kean.Application.Command.csproj" />
+		<ProjectReference Include="..\Kean.Application.Query\Kean.Application.Query.csproj" />
+		<ProjectReference Include="..\Kean.Infrastructure.Hangfire\Kean.Infrastructure.Hangfire.csproj" />
+		<ProjectReference Include="..\Kean.Infrastructure.Orleans\Kean.Infrastructure.Orleans.csproj" />
+		<ProjectReference Include="..\Kean.Infrastructure.Repository\Kean.Infrastructure.Repository.csproj" />
+		<ProjectReference Include="..\Kean.Infrastructure.Signalr\Kean.Infrastructure.SignalR.csproj" />
+		<ProjectReference Include="..\Kean.Infrastructure.Soap\Kean.Infrastructure.Soap.csproj" />
+		<ProjectReference Include="..\Kean.Infrastructure.Utilities\Kean.Infrastructure.Utilities.csproj" />
+	</ItemGroup>
+
+	<ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>
+
+</Project>

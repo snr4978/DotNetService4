@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="AutoMapper" Version="11.0.0" />
+		<PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="11.0.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Kean.Domain.App\Kean.Domain.App.csproj" />
+		<ProjectReference Include="..\Kean.Domain.Basic\Kean.Domain.Basic.csproj" />
+		<ProjectReference Include="..\Kean.Domain.Identity\Kean.Domain.Identity.csproj" />
+		<ProjectReference Include="..\Kean.Domain.Message\Kean.Domain.Message.csproj" />
+		<ProjectReference Include="..\Kean.Domain.Seedwork\Kean.Domain.Seedwork.csproj" />
+		<ProjectReference Include="..\Kean.Infrastructure.Database\Kean.Infrastructure.Database.csproj" />
+		<ProjectReference Include="..\Kean.Infrastructure.NoSql\Kean.Infrastructure.NoSql.csproj" />
+		<ProjectReference Include="..\Kean.Infrastructure.Utilities\Kean.Infrastructure.Utilities.csproj" />
+	</ItemGroup>
+
+</Project>
