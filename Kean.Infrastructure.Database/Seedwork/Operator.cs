@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections;
+using System.Linq;
 using System.Linq.Expressions;
 
 namespace Kean.Infrastructure.Database
@@ -55,6 +56,12 @@ namespace Kean.Infrastructure.Database
                     {
                         left = expression.Arguments[1];
                         right = expression.Arguments[0];
+                        return "IN";
+                    }
+                    else if (expression.Method.DeclaringType.IsAssignableTo(typeof(IEnumerable)))
+                    {
+                        left = expression.Arguments[0];
+                        right = expression.Object;
                         return "IN";
                     }
                     else if (expression.Method.DeclaringType == typeof(Query))

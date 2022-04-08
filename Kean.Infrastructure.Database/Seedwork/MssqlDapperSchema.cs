@@ -64,8 +64,8 @@ namespace Kean.Infrastructure.Database
         {
             return string.Format("INSERT INTO {0} ({1}) VALUES ({2})",
                 _schema,
-                string.Join(',', _columns.Where(c => c.identifier?.Identity != true).Select(c => c.name)),
-                string.Join(',', _columns.Where(c => c.identifier?.Identity != true).Select(c => $"{PREFIX}{c.property}"))
+                string.Join(',', _columns.Where(c => c.identifier?.Increment != true).Select(c => c.name)),
+                string.Join(',', _columns.Where(c => c.identifier?.Increment != true).Select(c => $"{PREFIX}{c.property}"))
             );
         }
 
@@ -163,7 +163,7 @@ namespace Kean.Infrastructure.Database
         public async Task<object> Add(T entity)
         {
             var sql = BuildInsert();
-            var identifier = _columns.SingleOrDefault(c => c.identifier?.Identity == true);
+            var identifier = _columns.SingleOrDefault(c => c.identifier?.Increment == true);
             if (identifier.property == null)
             {
                 await _context.ExecuteAsync(sql, entity, _context.Transaction);
