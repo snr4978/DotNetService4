@@ -2,6 +2,7 @@
 using Kean.Domain;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Kean.Presentation.Rest.Controllers
@@ -38,9 +39,16 @@ namespace Kean.Presentation.Rest.Controllers
             [FromQuery] int? offset,
             [FromQuery] int? limit)
         {
-            var total = await _basicQueryService.GetRoleCount(name);
             var items = await _basicQueryService.GetRoleList(name, sort, offset, limit);
-            return StatusCode(200, new { total, items });
+            if (offset.HasValue || limit.HasValue)
+            {
+                var total = await _basicQueryService.GetRoleCount(name);
+                return StatusCode(200, new { items, total });
+            }
+            else
+            {
+                return StatusCode(200, new { items, total = items.Count() });
+            }
         }
 
         /// <summary>
@@ -59,8 +67,8 @@ namespace Kean.Presentation.Rest.Controllers
             return result switch
             {
                 { Id: > 0 } => StatusCode(201, result.Id),
-                { Failure: { ErrorCode: nameof(ErrorCode.Conflict) } } => StatusCode(409),
-                _ => StatusCode(422)
+                { Failure.ErrorCode: nameof(ErrorCode.Conflict) } => StatusCode(409, result.Failure),
+                _ => StatusCode(422, result.Failure)
             };
         }
 
@@ -83,9 +91,9 @@ namespace Kean.Presentation.Rest.Controllers
             return result switch
             {
                 { Success: true } => StatusCode(200),
-                { Failure: { ErrorCode: nameof(ErrorCode.Conflict) } } => StatusCode(409),
-                { Failure: { ErrorCode: nameof(ErrorCode.Gone) } } => StatusCode(410),
-                _ => StatusCode(422)
+                { Failure.ErrorCode: nameof(ErrorCode.Conflict) } => StatusCode(409, result.Failure),
+                { Failure.ErrorCode: nameof(ErrorCode.Gone) } => StatusCode(410, result.Failure),
+                _ => StatusCode(422, result.Failure)
             };
         }
 
@@ -138,8 +146,8 @@ namespace Kean.Presentation.Rest.Controllers
             return result switch
             {
                 { Success: true } => StatusCode(200),
-                { Failure: { ErrorCode: nameof(ErrorCode.Gone) } } => StatusCode(410),
-                _ => StatusCode(422)
+                { Failure.ErrorCode: nameof(ErrorCode.Gone) } => StatusCode(410, result.Failure),
+                _ => StatusCode(422, result.Failure)
             };
         }
     }

@@ -249,20 +249,25 @@ namespace Kean.Infrastructure.Repository
          */
         public async Task<int> Create(User user, Func<string, Task<string>> encode)
         {
-            var id = await _database.From<T_SYS_USER>().Add(_mapper.Map<T_SYS_USER>(user, mapper => mapper.AfterMap(async (_, user) =>
-            {
-                user.USER_PASSWORD = await encode(await _redis.Hash["param"].Get("default_password"));
-                user.USER_PASSWORD_TIME = DateTime.Now;
-            })));
+            var entity = _mapper.Map<T_SYS_USER>(user);
+            entity.USER_PASSWORD = await encode(await _redis.Hash["param"].Get("default_password"));
+            entity.USER_PASSWORD_TIME = DateTime.Now;
+            var id = await _database.From<T_SYS_USER>().Add(entity);
             if (id != null && user.Role != null)
             {
                 foreach (var item in user.Role)
                 {
-                    await _database.From<T_SYS_USER_ROLE>().Add(new()
+                    if ((await _database.From<T_SYS_ROLE>()
+                        .Where(r => r.ROLE_ID == item)
+                        .Single(r => new { Count = Function.Count(r.ROLE_ID) }))
+                        .Count > 0)
                     {
-                        USER_ID = Convert.ToInt32(id),
-                        ROLE_ID = item
-                    });
+                        await _database.From<T_SYS_USER_ROLE>().Add(new()
+                        {
+                            USER_ID = Convert.ToInt32(id),
+                            ROLE_ID = item
+                        });
+                    }
                 }
             }
             return Convert.ToInt32(id);

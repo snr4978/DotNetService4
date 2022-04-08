@@ -20,34 +20,35 @@ namespace Kean.Application.Query
         public AutoMapper()
         {
             CreateMap<T_SYS_SECURITY, Blacklist>()
-                .ForMember(viewmodel => viewmodel.Address, entity => entity.MapFrom(security => security.SECURITY_VALUE))
-                .ForMember(viewmodel => viewmodel.Timestamp, entity => entity.MapFrom(security => security.SECURITY_TIMESTAMP));
+                .ForMember(viewmodel => viewmodel.Address, options => options.MapFrom(entity => entity.SECURITY_VALUE))
+                .ForMember(viewmodel => viewmodel.Timestamp, options => options.MapFrom(entity => entity.SECURITY_TIMESTAMP));
 
             CreateMap<T_SYS_MENU, Menu>()
-                .ForMember(viewmodel => viewmodel.Id, entity => entity.MapFrom(menu => menu.MENU_ID))
-                .ForMember(viewmodel => viewmodel.Parent, entity => entity.MapFrom(user => user.MENU_PARENT_ID))
-                .ForMember(viewmodel => viewmodel.Header, entity => entity.MapFrom(user => user.MENU_HEADER))
-                .ForMember(viewmodel => viewmodel.Url, entity => entity.MapFrom(user => user.MENU_URL))
-                .ForMember(viewmodel => viewmodel.Icon, entity => entity.MapFrom(user => user.MENU_ICON));
+                .ForMember(viewmodel => viewmodel.Id, options => options.MapFrom(entity => entity.MENU_ID))
+                .ForMember(viewmodel => viewmodel.Parent, options => options.MapFrom(entity => entity.MENU_PARENT_ID))
+                .ForMember(viewmodel => viewmodel.Header, options => options.MapFrom(entity => entity.MENU_HEADER))
+                .ForMember(viewmodel => viewmodel.Url, options => options.MapFrom(entity => entity.MENU_URL))
+                .ForMember(viewmodel => viewmodel.Icon, options => options.MapFrom(entity => entity.MENU_ICON));
 
             CreateMap<T_SYS_ROLE, Role>()
-                .ForMember(viewmodel => viewmodel.Id, entity => entity.MapFrom(role => role.ROLE_ID))
-                .ForMember(viewmodel => viewmodel.Name, entity => entity.MapFrom(role => role.ROLE_NAME))
-                .ForMember(viewmodel => viewmodel.Remark, entity => entity.MapFrom(role => role.ROLE_REMARK));
+                .ForMember(viewmodel => viewmodel.Id, options => options.MapFrom(entity => entity.ROLE_ID))
+                .ForMember(viewmodel => viewmodel.Name, options => options.MapFrom(entity => entity.ROLE_NAME))
+                .ForMember(viewmodel => viewmodel.Remark, options => options.MapFrom(entity => entity.ROLE_REMARK));
 
             CreateMap<T_SYS_USER, User>()
-                .ForMember(viewmodel => viewmodel.Id, entity => entity.MapFrom(user => user.USER_ID))
-                .ForMember(viewmodel => viewmodel.Name, entity => entity.MapFrom(user => user.USER_NAME))
-                .ForMember(viewmodel => viewmodel.Account, entity => entity.MapFrom(user => user.USER_ACCOUNT))
-                .ForMember(viewmodel => viewmodel.Avatar, entity => entity.MapFrom(user => user.USER_AVATAR));
+                .ForMember(viewmodel => viewmodel.Id, options => options.MapFrom(entity => entity.USER_ID))
+                .ForMember(viewmodel => viewmodel.Name, options => options.MapFrom(entity => entity.USER_NAME))
+                .ForMember(viewmodel => viewmodel.Account, options => options.MapFrom(entity => entity.USER_ACCOUNT))
+                .ForMember(viewmodel => viewmodel.Avatar, options => options.MapFrom(entity => entity.USER_AVATAR));
 
-            CreateMap<dynamic, Message>()
-                .ForMember(viewmodel => viewmodel.Id, entity => entity.MapFrom((message, _) => message.MESSAGE_ID))
-                .ForMember(viewmodel => viewmodel.Time, entity => entity.MapFrom((message, _) => message.MESSAGE_TIME))
-                .ForMember(viewmodel => viewmodel.Subject, entity => entity.MapFrom((message, _) => message.MESSAGE_SUBJECT))
-                .ForMember(viewmodel => viewmodel.Content, entity => entity.MapFrom((message, _) => message.MESSAGE_CONTENT))
-                .ForMember(viewmodel => viewmodel.Flag, entity => entity.MapFrom((message, _) => message.MESSAGE_FLAG))
-                .ForMember(viewmodel => viewmodel.Source, entity => entity.MapFrom((message, _) => new User { Id = message.USER_ID, Name = message.USER_NAME, Avatar = message.USER_AVATAR }));
+CreateMap<dynamic, Message>()
+                .ForMember(viewmodel => viewmodel.Id, options => options.MapFrom((entity, _) => entity.MESSAGE_ID))
+                .ForMember(viewmodel => viewmodel.Time, options => options.MapFrom((entity, _) => entity.MESSAGE_TIME))
+                .ForMember(viewmodel => viewmodel.Subject, options => options.MapFrom((entity, _) => entity.MESSAGE_SUBJECT))
+                .ForMember(viewmodel => viewmodel.Content, options => options.MapFrom((entity, _) => entity.MESSAGE_CONTENT))
+                .ForMember(viewmodel => viewmodel.Flag, options => options.MapFrom((entity, _) => entity.MESSAGE_FLAG))
+                .ForMember(viewmodel => viewmodel.Source, options => options.MapFrom((entity, _) => new User { Id = entity.USER_ID, Name = entity.USER_NAME, Avatar = entity.USER_AVATAR }));
+
         }
     }
 

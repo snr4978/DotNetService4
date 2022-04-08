@@ -87,8 +87,8 @@ namespace Kean.Presentation.Rest.Controllers
             var result = await _identityCommandService.InitializePassword(password);
             return result switch
             {
-                { Failure: { PropertyName: nameof(password.Id) } } => StatusCode(405),
-                { Failure: { PropertyName: nameof(password.Replacement) } } => StatusCode(422),
+                { Failure.PropertyName: nameof(password.Id) } => StatusCode(405),
+                { Failure.PropertyName: nameof(password.Replacement) } => StatusCode(422),
                 _ => StatusCode(201)
             };
         }
@@ -144,28 +144,10 @@ namespace Kean.Presentation.Rest.Controllers
             return result switch
             {
                 { Success: true } => StatusCode(200),
-                { Failure: { ErrorCode: nameof(ErrorCode.Precondition) } } => StatusCode(428),
-                { Failure: { ErrorCode: nameof(ErrorCode.Expired) } } => StatusCode(419),
+                { Failure.ErrorCode: nameof(ErrorCode.Precondition) } => StatusCode(428),
+                { Failure.ErrorCode: nameof(ErrorCode.Expired) } => StatusCode(419),
                 _ => StatusCode(403)
             };
-        }
-
-        /// <summary>
-        /// 获取当前用户消息数
-        /// </summary>
-        /// <response code="200">成功</response>
-        [HttpGet("current/messages/count")]
-        [ProducesResponseType(200)]
-        public async Task<IActionResult> GetMessageCount(
-            [FromQuery] string subject,
-            [FromQuery] string source,
-            [FromQuery] DateTime? start,
-            [FromQuery] DateTime? end,
-            [FromQuery] bool? flag,
-            [FromMiddleware] int session)
-        {
-            var count = await _messageQueryService.GetCount(session, subject, source, start, end, flag);
-            return StatusCode(200, count);
         }
 
         /// <summary>
@@ -184,16 +166,15 @@ namespace Kean.Presentation.Rest.Controllers
             [FromQuery] int? limit,
             [FromMiddleware] int session)
         {
-            if (offset.HasValue)
+            var items = await _messageQueryService.GetList(session, subject, source, start, end, flag, offset, limit);
+            if (offset.HasValue || limit.HasValue)
             {
                 var total = await _messageQueryService.GetCount(session, subject, source, start, end, flag);
-                var items = await _messageQueryService.GetList(session, subject, source, start, end, flag, offset, limit);
-                return StatusCode(200, new { total, items });
+                return StatusCode(200, new { items, total });
             }
             else
             {
-                var messages = await _messageQueryService.GetList(session, subject, source, start, end, flag, offset, limit);
-                return StatusCode(200, messages);
+                return StatusCode(200, new { items, total = items.Count() });
             }
         }
 
@@ -245,9 +226,16 @@ namespace Kean.Presentation.Rest.Controllers
             [FromQuery] int? offset,
             [FromQuery] int? limit)
         {
-            var total = await _basicQueryService.GetUserCount(name, account, role);
             var items = await _basicQueryService.GetUserList(name, account, role, sort, offset, limit);
-            return StatusCode(200, new { total, items });
+            if (offset.HasValue || limit.HasValue)
+            {
+                var total = await _basicQueryService.GetUserCount(name, account, role);
+                return StatusCode(200, new { items, total });
+            }
+            else
+            {
+                return StatusCode(200, new { items, total = items.Count() });
+            }
         }
 
         /// <summary>
@@ -266,8 +254,8 @@ namespace Kean.Presentation.Rest.Controllers
             return result switch
             {
                 { Id: > 0 } => StatusCode(201, result.Id),
-                { Failure: { ErrorCode: nameof(ErrorCode.Conflict) } } => StatusCode(409, result.Failure.PropertyName.ToLower()),
-                _ => StatusCode(422)
+                { Failure.ErrorCode: nameof(ErrorCode.Conflict) } => StatusCode(409, result.Failure),
+                _ => StatusCode(422, result.Failure)
             };
         }
 
@@ -290,9 +278,9 @@ namespace Kean.Presentation.Rest.Controllers
             return result switch
             {
                 { Success: true } => StatusCode(200),
-                { Failure: { ErrorCode: nameof(ErrorCode.Conflict) } } => StatusCode(409, result.Failure.PropertyName.ToLower()),
-                { Failure: { ErrorCode: nameof(ErrorCode.Gone) } } => StatusCode(410),
-                _ => StatusCode(422)
+                { Failure.ErrorCode: nameof(ErrorCode.Conflict) } => StatusCode(409, result.Failure),
+                { Failure.ErrorCode: nameof(ErrorCode.Gone) } => StatusCode(410, result.Failure),
+                _ => StatusCode(422, result.Failure)
             };
         }
 
@@ -329,8 +317,8 @@ namespace Kean.Presentation.Rest.Controllers
             return result switch
             {
                 { Success: true } => StatusCode(204),
-                { Failure: { ErrorCode: nameof(ErrorCode.Gone) } } => StatusCode(410),
-                _ => StatusCode(422)
+                { Failure.ErrorCode: nameof(ErrorCode.Gone) } => StatusCode(410, result.Failure),
+                _ => StatusCode(422, result.Failure)
             };
         }
 
