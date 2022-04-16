@@ -48,6 +48,10 @@ namespace Kean.Infrastructure.Database
                     _sql.AppendFormat("{0}{1}", _prefix, key);
                     _param.Add(key, value);
                     break;
+                case null:
+                    _sql.Replace(" = ", " IS ", _sql.Length - 3, 3).Replace(" <> ", " IS NOT ", _sql.Length - 4, 4);
+                    _sql.Append("NULL");
+                    break;
                 case bool b:
                     _sql.AppendFormat("{0}{1}", _prefix, key);
                     _param.Add(key, b ? 1 : 0);
@@ -184,10 +188,10 @@ namespace Kean.Infrastructure.Database
                 switch (node.NodeType)
                 {
                     case ExpressionType.Equal:
-                        _sql.AppendFormat(" {0}", _operator = "IS NULL");
+                        _sql.Append(" IS NULL");
                         break;
                     case ExpressionType.NotEqual:
-                        _sql.AppendFormat(" {0}", _operator = "IS NOT NULL");
+                        _sql.Append(" IS NOT NULL");
                         break;
                     default:
                         _sql.AppendFormat(" {0} ", Operator.Get(node.NodeType));
@@ -238,6 +242,7 @@ namespace Kean.Infrastructure.Database
                     _sql.Append(node.Value);
                     break;
                 case null:
+                    _sql.Replace(" = ", " IS ", _sql.Length - 3, 3).Replace(" <> ", " IS NOT ", _sql.Length - 4, 4);
                     _sql.Append("NULL");
                     break;
                 case bool b:
@@ -249,18 +254,12 @@ namespace Kean.Infrastructure.Database
                 case string s:
                     if (_operator == "LIKE")
                     {
-                        switch (_method)
+                        _sql.AppendFormat(_method switch
                         {
-                            case "StartsWith":
-                                _sql.AppendFormat("'{0}%'", s);
-                                break;
-                            case "EndsWith":
-                                _sql.AppendFormat("'%{0}'", s);
-                                break;
-                            default:
-                                _sql.AppendFormat("'%{0}%'", s);
-                                break;
-                        }
+                            "StartsWith" => "'{0}%'",
+                            "EndsWith" => "'%{0}'",
+                            _ => "'%{0}%'"
+                        }, s);
                     }
                     else
                     {
