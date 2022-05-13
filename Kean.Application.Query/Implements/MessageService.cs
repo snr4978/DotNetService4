@@ -54,11 +54,11 @@ namespace Kean.Application.Query.Implements
             }
             if (start.HasValue)
             {
-                schema = schema.Where(m => m.MESSAGE_TIME >= start.Value);
+                schema = schema.Where(m => m.CREATE_TIME >= start.Value);
             }
             if (end.HasValue)
             {
-                schema = schema.Where(m => m.MESSAGE_TIME <= end.Value.AddDays(1));
+                schema = schema.Where(m => m.CREATE_TIME <= end.Value.AddDays(1));
             }
             if (flag.HasValue)
             {
@@ -74,7 +74,7 @@ namespace Kean.Application.Query.Implements
         {
             var schema = _database.From<T_SYS_USER_MESSAGE, T_SYS_USER>(name1: $"T_SYS_USER_MESSAGE_{userId}")
                 .Join(Join.Left, (m, u) => m.MESSAGE_SOURCE == u.USER_ID)
-                .OrderBy((m, u) => m.MESSAGE_TIME, Order.Descending);
+                .OrderBy((m, u) => m.CREATE_TIME, Order.Descending);
             if (!string.IsNullOrWhiteSpace(subject))
             {
                 schema = schema.Where((m, _) => m.MESSAGE_SUBJECT.Contains(subject));
@@ -85,11 +85,11 @@ namespace Kean.Application.Query.Implements
             }
             if (start.HasValue)
             {
-                schema = schema.Where((m, _) => m.MESSAGE_TIME >= start.Value);
+                schema = schema.Where((m, _) => m.CREATE_TIME >= start.Value);
             }
             if (end.HasValue)
             {
-                schema = schema.Where((m, _) => m.MESSAGE_TIME <= end.Value.AddDays(1));
+                schema = schema.Where((m, _) => m.CREATE_TIME <= end.Value.AddDays(1));
             }
             if (flag.HasValue)
             {
@@ -106,7 +106,7 @@ namespace Kean.Application.Query.Implements
             return _mapper.Map<IEnumerable<Message>>(await schema.Select((m, u) => new
             {
                 m.MESSAGE_ID,
-                m.MESSAGE_TIME,
+                m.CREATE_TIME,
                 m.MESSAGE_SUBJECT,
                 m.MESSAGE_CONTENT,
                 m.MESSAGE_FLAG,
@@ -127,7 +127,7 @@ namespace Kean.Application.Query.Implements
                 .Single((m, u) => new
                 {
                     m.MESSAGE_ID,
-                    m.MESSAGE_TIME,
+                    m.CREATE_TIME,
                     m.MESSAGE_SUBJECT,
                     m.MESSAGE_CONTENT,
                     m.MESSAGE_FLAG,

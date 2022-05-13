@@ -1,4 +1,6 @@
-﻿namespace Kean.Infrastructure.Database.Repository.Default.Entities
+﻿using System;
+
+namespace Kean.Infrastructure.Database.Repository.Default.Entities
 {
     public class T_SYS_PARAM : IEntity
     {
@@ -17,5 +19,15 @@
 		/// 备注
         /// </summary>
         public virtual string PARAM_REMARK { get; set; }
+
+        /// <summary>
+        /// 创建时间
+        /// </summary>
+        public DateTime CREATE_TIME { get; set; }
+
+        /// <summary>
+        /// 更新时间
+        /// </summary>
+        public DateTime UPDATE_TIME { get; set; }
     }
 }

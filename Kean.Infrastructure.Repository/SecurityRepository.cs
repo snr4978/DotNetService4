@@ -3,7 +3,6 @@ using Kean.Infrastructure.Database.Repository.Default.Entities;
 using Kean.Infrastructure.NoSql.Repository.Default;
 using Kean.Infrastructure.Utilities;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -53,7 +52,10 @@ namespace Kean.Infrastructure.Repository
         {
             if (int.TryParse(await _redis.Hash["param"].Get("address_security"), out int limit) && limit > 0)
             {
-                var security = await _database.From<T_SYS_SECURITY>().Where(s => s.SECURITY_TYPE == "Address" && s.SECURITY_VALUE == address).Single();
+                var timestamp = DateTime.Now;
+                var security = await _database.From<T_SYS_SECURITY>()
+                    .Where(s => s.SECURITY_TYPE == "Address" && s.SECURITY_VALUE == address)
+                    .Single();
                 if (security == null)
                 {
                     await _database.From<T_SYS_SECURITY>().Add(new()
@@ -61,18 +63,19 @@ namespace Kean.Infrastructure.Repository
                         SECURITY_TYPE = "Address",
                         SECURITY_VALUE = address,
                         SECURITY_STATUS = 1,
-                        SECURITY_TIMESTAMP = DateTime.Now
+                        CREATE_TIME = timestamp,
+                        UPDATE_TIME = timestamp
                     });
                 }
                 else if (security.SECURITY_STATUS > 0)
                 {
-                    security.SECURITY_TIMESTAMP = DateTime.Now;
+                    security.UPDATE_TIME = timestamp;
                     if (++security.SECURITY_STATUS > limit)
                     {
                         security.SECURITY_STATUS = 0;
                         await _redis.Hash["blacklist"].Set(address, JsonHelper.Serialize(security));
                     }
-                    await _database.From<T_SYS_SECURITY>().Update(security);
+                    await _database.From<T_SYS_SECURITY>().Update(security, nameof(T_SYS_SECURITY.CREATE_TIME));
                 }
                 else
                 {
@@ -86,7 +89,9 @@ namespace Kean.Infrastructure.Repository
          */
         public async Task UnsignAddress(string address)
         {
-            await _database.From<T_SYS_SECURITY>().Where(s => s.SECURITY_TYPE == "Address" && s.SECURITY_VALUE == address).Delete();
+            await _database.From<T_SYS_SECURITY>()
+                .Where(s => s.SECURITY_TYPE == "Address" && s.SECURITY_VALUE == address)
+                .Delete();
         }
 
         /*
@@ -96,7 +101,10 @@ namespace Kean.Infrastructure.Repository
         {
             if (int.TryParse(await _redis.Hash["param"].Get("account_security"), out int limit) && limit > 0)
             {
-                var security = await _database.From<T_SYS_SECURITY>().Where(s => s.SECURITY_TYPE == "Account" && s.SECURITY_VALUE == account).Single();
+                var timestamp = DateTime.Now;
+                var security = await _database.From<T_SYS_SECURITY>()
+                    .Where(s => s.SECURITY_TYPE == "Account" && s.SECURITY_VALUE == account)
+                    .Single();
                 if (security == null)
                 {
                     await _database.From<T_SYS_SECURITY>().Add(new()
@@ -104,17 +112,18 @@ namespace Kean.Infrastructure.Repository
                         SECURITY_TYPE = "Account",
                         SECURITY_VALUE = account,
                         SECURITY_STATUS = 1,
-                        SECURITY_TIMESTAMP = DateTime.Now
+                        CREATE_TIME = timestamp,
+                        UPDATE_TIME = timestamp
                     });
                 }
                 else if (security.SECURITY_STATUS > 0)
                 {
-                    security.SECURITY_TIMESTAMP = DateTime.Now;
+                    security.UPDATE_TIME = timestamp;
                     if (++security.SECURITY_STATUS > limit)
                     {
                         security.SECURITY_STATUS = 0;
                     }
-                    await _database.From<T_SYS_SECURITY>().Update(security);
+                    await _database.From<T_SYS_SECURITY>().Update(security, nameof(T_SYS_SECURITY.CREATE_TIME));
                 }
             }
         }
@@ -124,7 +133,9 @@ namespace Kean.Infrastructure.Repository
          */
         public async Task UnsignAccount(string account)
         {
-            await _database.From<T_SYS_SECURITY>().Where(s => s.SECURITY_TYPE == "Account" && s.SECURITY_VALUE == account).Delete();
+            await _database.From<T_SYS_SECURITY>()
+                .Where(s => s.SECURITY_TYPE == "Account" && s.SECURITY_VALUE == account)
+                .Delete();
         }
 
         /*
@@ -132,7 +143,9 @@ namespace Kean.Infrastructure.Repository
          */
         public async Task<bool> AccountIsFrozen(string account)
         {
-            return await _database.From<T_SYS_SECURITY>().Where(s => s.SECURITY_TYPE == "Account" && s.SECURITY_VALUE == account && s.SECURITY_STATUS == 0).Single() != null;
+            return await _database.From<T_SYS_SECURITY>()
+                .Where(s => s.SECURITY_TYPE == "Account" && s.SECURITY_VALUE == account && s.SECURITY_STATUS == 0)
+                .Single() != null;
         }
 
         /*
@@ -142,11 +155,13 @@ namespace Kean.Infrastructure.Repository
         {
             if (await _redis.Hash["param"].Get("security_log") == "Enable")
             {
+                var timestamp = DateTime.Now;
                 await _database.From<T_SYS_SECURITY_LOG>().Add(new()
                 {
                     LOG_TAG = tag,
-                    LOG_TIME = DateTime.Now,
-                    LOG_CONTENT = content
+                    LOG_CONTENT = content,
+                    CREATE_TIME = timestamp,
+                    UPDATE_TIME = timestamp
                 });
             }
         }

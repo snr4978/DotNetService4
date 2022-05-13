@@ -36,11 +36,12 @@ namespace Kean.Infrastructure.Repository
             return _database.From<T_SYS_USER_MESSAGE>($"T_SYS_USER_MESSAGE_{target}")
                 .Add(new()
                 {
-                    MESSAGE_TIME = time,
                     MESSAGE_SOURCE = source,
                     MESSAGE_SUBJECT = subject,
                     MESSAGE_CONTENT = content,
-                    MESSAGE_FLAG = false
+                    MESSAGE_FLAG = false,
+                    CREATE_TIME = time,
+                    UPDATE_TIME = time
                 })
                 .ContinueWith(r => !r.IsFaulted && r.Result != null);
         }
@@ -52,7 +53,11 @@ namespace Kean.Infrastructure.Repository
         {
             return _database.From<T_SYS_USER_MESSAGE>($"T_SYS_USER_MESSAGE_{userId}")
                 .Where(m => m.MESSAGE_ID == messageId)
-                .Update(new { MESSAGE_FLAG = flag });
+                .Update(new
+                {
+                    MESSAGE_FLAG = flag,
+                    UPDATE_TIME = DateTime.Now
+                });
         }
 
         /*

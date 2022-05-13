@@ -21,7 +21,7 @@ namespace Kean.Application.Query
         {
             CreateMap<T_SYS_SECURITY, Blacklist>()
                 .ForMember(viewmodel => viewmodel.Address, options => options.MapFrom(entity => entity.SECURITY_VALUE))
-                .ForMember(viewmodel => viewmodel.Timestamp, options => options.MapFrom(entity => entity.SECURITY_TIMESTAMP));
+                .ForMember(viewmodel => viewmodel.Timestamp, options => options.MapFrom(entity => entity.UPDATE_TIME));
 
             CreateMap<T_SYS_MENU, Menu>()
                 .ForMember(viewmodel => viewmodel.Id, options => options.MapFrom(entity => entity.MENU_ID))
@@ -41,9 +41,9 @@ namespace Kean.Application.Query
                 .ForMember(viewmodel => viewmodel.Account, options => options.MapFrom(entity => entity.USER_ACCOUNT))
                 .ForMember(viewmodel => viewmodel.Avatar, options => options.MapFrom(entity => entity.USER_AVATAR));
 
-CreateMap<dynamic, Message>()
+            CreateMap<dynamic, Message>()
                 .ForMember(viewmodel => viewmodel.Id, options => options.MapFrom((entity, _) => entity.MESSAGE_ID))
-                .ForMember(viewmodel => viewmodel.Time, options => options.MapFrom((entity, _) => entity.MESSAGE_TIME))
+                .ForMember(viewmodel => viewmodel.Time, options => options.MapFrom((entity, _) => entity.CREATE_TIME))
                 .ForMember(viewmodel => viewmodel.Subject, options => options.MapFrom((entity, _) => entity.MESSAGE_SUBJECT))
                 .ForMember(viewmodel => viewmodel.Content, options => options.MapFrom((entity, _) => entity.MESSAGE_CONTENT))
                 .ForMember(viewmodel => viewmodel.Flag, options => options.MapFrom((entity, _) => entity.MESSAGE_FLAG))
