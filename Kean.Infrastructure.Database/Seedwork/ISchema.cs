@@ -9,7 +9,7 @@ namespace Kean.Infrastructure.Database
     /// 表示对数据库对象的操作
     /// </summary>
     /// <typeparam name="T">数据库对象映射的实体类型</typeparam>
-    public interface ISchema<T> 
+    public interface ISchema<T>
         where T : IEntity
     {
         /// <summary>
@@ -29,7 +29,8 @@ namespace Kean.Infrastructure.Database
         /// 更新记录
         /// </summary>
         /// <param name="entity">实体对象</param>
-        Task<int> Update(T entity);
+        /// <param name="ignore">忽略字段</param>
+        Task<int> Update(T entity, params string[] ignore);
 
         /// <summary>
         /// 更新记录
@@ -168,8 +169,8 @@ namespace Kean.Infrastructure.Database
     /// </summary>
     /// <typeparam name="T1">数据库对象映射的实体类型1</typeparam>
     /// <typeparam name="T2">数据库对象映射的实体类型2</typeparam>
-    public interface ISchema<T1, T2> 
-        where T1 : IEntity 
+    public interface ISchema<T1, T2>
+        where T1 : IEntity
         where T2 : IEntity
     {
         /// <summary>

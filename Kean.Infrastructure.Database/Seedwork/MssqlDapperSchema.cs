@@ -182,7 +182,7 @@ namespace Kean.Infrastructure.Database
             }
         }
 
-        public async Task<int> Update(T entity)
+        public async Task<int> Update(T entity, params string[] ignore)
         {
             var i = 0;
             _param = new Parameters();
@@ -197,6 +197,7 @@ namespace Kean.Infrastructure.Database
             _value = new Parameters();
             _param.AddDynamicParams(_columns
                 .Where(c => c.identifier == null)
+                .ExceptBy(ignore, c => c.property)
                 .ToDictionary(
                     c => $"v{i++}",
                     c =>
