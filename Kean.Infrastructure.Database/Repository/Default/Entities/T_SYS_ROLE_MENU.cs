@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Kean.Infrastructure.Database.Repository.Default.Entities
+﻿namespace Kean.Infrastructure.Database.Repository.Default.Entities
 {
     public class T_SYS_ROLE_MENU : IEntity
     {
@@ -19,15 +17,5 @@ namespace Kean.Infrastructure.Database.Repository.Default.Entities
         /// 菜单
         /// </summary>
         public int MENU_ID { get; set; }
-
-        /// <summary>
-        /// 创建时间
-        /// </summary>
-        public DateTime CREATE_TIME { get; set; }
-
-        /// <summary>
-        /// 更新时间
-        /// </summary>
-        public DateTime UPDATE_TIME { get; set; }
     }
 }

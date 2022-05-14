@@ -57,9 +57,7 @@ namespace Kean.Infrastructure.Repository
         public async Task<int?> GetIdentity(string account, Password password)
         {
             return ((await Super(u => u.USER_ACCOUNT == account && u.USER_PASSWORD == password.CipherText)) ?? 
-                (await _database.From<T_SYS_USER>()
-                .Where(u => u.USER_ACCOUNT == account && u.USER_PASSWORD == password.CipherText)
-                .Single()))?
+                (await _database.From<T_SYS_USER>().Where(u => u.USER_ACCOUNT == account && u.USER_PASSWORD == password.CipherText).Single()))?
                 .USER_ID;
         }
 
@@ -73,10 +71,7 @@ namespace Kean.Infrastructure.Repository
             if (await param.Get("password_initial") == "Enable")
             {
                 var @default = await param.Get("default_password");
-                var password = (await _database.From<T_SYS_USER>()
-                    .Where(u => u.USER_ID == id)
-                    .Single())?
-                    .USER_PASSWORD;
+                var password = (await _database.From<T_SYS_USER>().Where(u => u.USER_ID == id).Single())?.USER_PASSWORD;
                 if (password == (@default == null ? null : new Password(@default)))
                 {
                     await identity.Set("password_initial", "0");
@@ -104,9 +99,7 @@ namespace Kean.Infrastructure.Repository
             var identity = _redis.Hash[$"identity:{id}"];
             if (int.TryParse(await param.Get("password_timeout"), out int days) && days > 0)
             {
-                var date = (await _database.From<T_SYS_USER>()
-                    .Where(u => u.USER_ID == id).Single())?
-                    .USER_PASSWORD_TIME?.AddDays(days);
+                var date = (await _database.From<T_SYS_USER>().Where(u => u.USER_ID == id).Single())?.USER_PASSWORD_TIME?.AddDays(days);
                 await identity.Set("password_expired", date?.ToString("yyyy-MM-dd HH:mm:ss"));
                 return date;
             }
@@ -123,9 +116,7 @@ namespace Kean.Infrastructure.Repository
         public async Task<bool> VerifyPassword(int id, Password password)
         {
             return ((await Super(u => u.USER_ID == id)) ??
-                (await _database.From<T_SYS_USER>()
-                .Where(u => u.USER_ID == id)
-                .Single()))?
+                (await _database.From<T_SYS_USER>().Where(u => u.USER_ID == id).Single()))?
                 .USER_PASSWORD == password;
         }
 
@@ -143,30 +134,20 @@ namespace Kean.Infrastructure.Repository
                 return false;
             }
             var super = await Super(s => s.USER_ID == id);
-            var timestamp = DateTime.Now;
             if (super != null)
             {
                 super.USER_PASSWORD = password.CipherText;
                 var json = JsonHelper.Serialize(super);
-                await _database.From<T_SYS_PARAM>()
-                    .Where(p => p.PARAM_KEY == "super_user")
-                    .Update(new
-                    {
-                        PARAM_VALUE = json,
-                        UPDATE_TIME = timestamp
-                    });
+                await _database.From<T_SYS_PARAM>().Where(p => p.PARAM_KEY == "super_user").Update(new { PARAM_VALUE = json });
                 await param.Set("super_user", json);
             }
             else
             {
-                await _database.From<T_SYS_USER>()
-                    .Where(u => u.USER_ID == id)
-                    .Update(new
-                    {
-                        USER_PASSWORD = password.CipherText,
-                        USER_PASSWORD_TIME = timestamp,
-                        UPDATE_TIME = timestamp
-                    });
+                await _database.From<T_SYS_USER>().Where(u => u.USER_ID == id).Update(new
+                {
+                    USER_PASSWORD = password.CipherText,
+                    USER_PASSWORD_TIME = DateTime.Now
+                });
             }
             return true;
         }
@@ -181,24 +162,12 @@ namespace Kean.Infrastructure.Repository
             {
                 super.USER_AVATAR = avatar;
                 var json = JsonHelper.Serialize(super);
-                await _database.From<T_SYS_PARAM>()
-                    .Where(p => p.PARAM_KEY == "super_user")
-                    .Update(new
-                    {
-                        PARAM_VALUE = json,
-                        UPDATE_TIME = DateTime.Now
-                    });
+                await _database.From<T_SYS_PARAM>().Where(p => p.PARAM_KEY == "super_user").Update(new { PARAM_VALUE = json });
                 await _redis.Hash["param"].Set("super_user", json);
             }
             else
             {
-                await _database.From<T_SYS_USER>()
-                    .Where(u => u.USER_ID == id)
-                    .Update(new
-                    {
-                        USER_AVATAR = avatar,
-                        UPDATE_TIME = DateTime.Now
-                    });
+                await _database.From<T_SYS_USER>().Where(u => u.USER_ID == id).Update(new { USER_AVATAR = avatar });
             }
             return true;
         }
@@ -280,12 +249,9 @@ namespace Kean.Infrastructure.Repository
          */
         public async Task<int> Create(User user, Func<string, Task<string>> encode)
         {
-            var timestamp = DateTime.Now;
             var entity = _mapper.Map<T_SYS_USER>(user);
             entity.USER_PASSWORD = await encode(await _redis.Hash["param"].Get("default_password"));
-            entity.USER_PASSWORD_TIME = timestamp;
-            entity.CREATE_TIME = timestamp;
-            entity.UPDATE_TIME = timestamp;
+            entity.USER_PASSWORD_TIME = DateTime.Now;
             var id = await _database.From<T_SYS_USER>().Add(entity);
             if (id != null && user.Role != null)
             {
@@ -299,9 +265,7 @@ namespace Kean.Infrastructure.Repository
                         await _database.From<T_SYS_USER_ROLE>().Add(new()
                         {
                             USER_ID = Convert.ToInt32(id),
-                            ROLE_ID = item,
-                            CREATE_TIME = timestamp,
-                            UPDATE_TIME = timestamp
+                            ROLE_ID = item
                         });
                     }
                 }
@@ -314,12 +278,10 @@ namespace Kean.Infrastructure.Repository
          */
         public async Task Modify(User user)
         {
-            var timestamp = DateTime.Now;
             await _database.From<T_SYS_USER>().Where(u => u.USER_ID == user.Id).Update(new
             {
                 USER_NAME = user.Name,
-                USER_ACCOUNT = user.Account,
-                UPDATE_TIME = timestamp
+                USER_ACCOUNT = user.Account
             });
             await _database.From<T_SYS_USER_ROLE>().Where(r => r.USER_ID == user.Id).Delete();
             if (user.Role != null)
@@ -329,9 +291,7 @@ namespace Kean.Infrastructure.Repository
                     await _database.From<T_SYS_USER_ROLE>().Add(new()
                     {
                         USER_ID = user.Id,
-                        ROLE_ID = item,
-                        CREATE_TIME = timestamp,
-                        UPDATE_TIME = timestamp
+                        ROLE_ID = item
                     });
                 }
             }
@@ -355,14 +315,12 @@ namespace Kean.Infrastructure.Repository
          */
         public async Task ResetPassword(int id, Func<string, Task<string>> encode)
         {
-            var timestamp = DateTime.Now;
             await _database.From<T_SYS_USER>()
                 .Where(r => r.USER_ID == id)
                 .Update(new
                 {
                     USER_PASSWORD = await encode(await _redis.Hash["param"].Get("default_password")),
-                    USER_PASSWORD_TIME = timestamp,
-                    UPDATE_TIME = timestamp
+                    USER_PASSWORD_TIME = DateTime.Now
                 });
         }
 

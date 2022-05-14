@@ -11,6 +11,11 @@ namespace Kean.Infrastructure.Database.Repository.Default.Entities
         public int MESSAGE_ID { get; set; }
 
         /// <summary>
+        /// 时间
+        /// </summary>
+        public DateTime MESSAGE_TIME { get; set; }
+
+        /// <summary>
         /// 消息源
         /// </summary>
         public int MESSAGE_SOURCE { get; set; }
@@ -29,15 +34,5 @@ namespace Kean.Infrastructure.Database.Repository.Default.Entities
         /// 标识
         /// </summary>
         public bool MESSAGE_FLAG { get; set; }
-
-        /// <summary>
-        /// 创建时间
-        /// </summary>
-        public DateTime CREATE_TIME { get; set; }
-
-        /// <summary>
-        /// 更新时间
-        /// </summary>
-        public DateTime UPDATE_TIME { get; set; }
     }
 }
