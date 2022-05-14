@@ -57,8 +57,9 @@ namespace Kean.Infrastructure.Repository
          */
         public async Task<int> Create(Role role)
         {
-            var id = await _database.From<T_SYS_ROLE>()
-                .Add(_mapper.Map<T_SYS_ROLE>(role));
+            var entity = _mapper.Map<T_SYS_ROLE>(role);
+            entity.UPDATE_TIME = entity.CREATE_TIME = DateTime.Now;
+            var id = await _database.From<T_SYS_ROLE>().Add(entity);
             return Convert.ToInt32(id);
         }
 
@@ -67,8 +68,9 @@ namespace Kean.Infrastructure.Repository
          */
         public Task Modify(Role role)
         {
-            return _database.From<T_SYS_ROLE>()
-                .Update(_mapper.Map<T_SYS_ROLE>(role));
+            var entity = _mapper.Map<T_SYS_ROLE>(role);
+            entity.UPDATE_TIME = DateTime.Now;
+            return _database.From<T_SYS_ROLE>().Update(entity, nameof(T_SYS_ROLE.CREATE_TIME));
         }
 
         /*
@@ -89,12 +91,15 @@ namespace Kean.Infrastructure.Repository
             await _database.From<T_SYS_ROLE_MENU>()
                 .Where(r => r.ROLE_ID == id)
                 .Delete();
+            var timestamp = DateTime.Now;
             foreach (var item in permission)
             {
                 await _database.From<T_SYS_ROLE_MENU>().Add(new()
                 {
                     ROLE_ID = id,
-                    MENU_ID = item
+                    MENU_ID = item,
+                    CREATE_TIME = timestamp,
+                    UPDATE_TIME = timestamp
                 });
             }
         }

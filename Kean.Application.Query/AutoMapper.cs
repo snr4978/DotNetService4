@@ -41,7 +41,7 @@ namespace Kean.Application.Query
                 .ForMember(viewmodel => viewmodel.Account, options => options.MapFrom(entity => entity.USER_ACCOUNT))
                 .ForMember(viewmodel => viewmodel.Avatar, options => options.MapFrom(entity => entity.USER_AVATAR));
 
-CreateMap<dynamic, Message>()
+            CreateMap<dynamic, Message>()
                 .ForMember(viewmodel => viewmodel.Id, options => options.MapFrom((entity, _) => entity.MESSAGE_ID))
                 .ForMember(viewmodel => viewmodel.Time, options => options.MapFrom((entity, _) => entity.MESSAGE_TIME))
                 .ForMember(viewmodel => viewmodel.Subject, options => options.MapFrom((entity, _) => entity.MESSAGE_SUBJECT))
