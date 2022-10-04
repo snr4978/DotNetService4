@@ -13,18 +13,18 @@ namespace Kean.Presentation.Rest.Controllers
     [ApiController, Route("api/roles")]
     public class RolesController : ControllerBase
     {
-        private readonly Application.Command.Interfaces.IBasicService _basicCommandService; // 基础信息命令服务
-        private readonly Application.Query.Interfaces.IBasicService _basicQueryService; // 基础信息查询服务
+        private readonly Application.Command.Interfaces.IAdminService _adminCommandService; // 基础信息命令服务
+        private readonly Application.Query.Interfaces.IAdminService _adminQueryService; // 基础信息查询服务
 
         /// <summary>
         /// 依赖注入
         /// </summary>
         public RolesController(
-            Application.Command.Interfaces.IBasicService basicCommandService,
-            Application.Query.Interfaces.IBasicService basicQueryService)
+            Application.Command.Interfaces.IAdminService adminCommandService,
+            Application.Query.Interfaces.IAdminService adminQueryService)
         {
-            _basicCommandService = basicCommandService;
-            _basicQueryService = basicQueryService;
+            _adminCommandService = adminCommandService;
+            _adminQueryService = adminQueryService;
         }
 
         /// <summary>
@@ -39,10 +39,10 @@ namespace Kean.Presentation.Rest.Controllers
             [FromQuery] int? offset,
             [FromQuery] int? limit)
         {
-            var items = await _basicQueryService.GetRoleList(name, sort, offset, limit);
+            var items = await _adminQueryService.GetRoleList(name, sort, offset, limit);
             if (offset.HasValue || limit.HasValue)
             {
-                var total = await _basicQueryService.GetRoleCount(name);
+                var total = await _adminQueryService.GetRoleCount(name);
                 return StatusCode(200, new { items, total });
             }
             else
@@ -63,7 +63,7 @@ namespace Kean.Presentation.Rest.Controllers
         [ProducesResponseType(422)]
         public async Task<IActionResult> Create(Role role)
         {
-            var result = await _basicCommandService.CreateRole(role);
+            var result = await _adminCommandService.CreateRole(role);
             return result switch
             {
                 { Id: > 0 } => StatusCode(201, result.Id),
@@ -87,7 +87,7 @@ namespace Kean.Presentation.Rest.Controllers
         public async Task<IActionResult> Modify(int id, Role role)
         {
             role.Id = id;
-            var result = await _basicCommandService.ModifyRole(role);
+            var result = await _adminCommandService.ModifyRole(role);
             return result switch
             {
                 { Success: true } => StatusCode(200),
@@ -109,7 +109,7 @@ namespace Kean.Presentation.Rest.Controllers
         {
             return batch.Method switch
             {
-                BatchMethod.Delete => StatusCode(200, await _basicCommandService.DeleteRole(batch.Data)),
+                BatchMethod.Delete => StatusCode(200, await _adminCommandService.DeleteRole(batch.Data)),
                 _ => StatusCode(405)
             };
         }
@@ -122,7 +122,7 @@ namespace Kean.Presentation.Rest.Controllers
         [ProducesResponseType(200)]
         public async Task<IActionResult> MenuPermission(int id)
         {
-            var (Menu, Permission) = await _basicQueryService.GetRoleMenuPermission(id);
+            var (Menu, Permission) = await _adminQueryService.GetRoleMenuPermission(id);
             return StatusCode(200, new
             {
                 Menu,
@@ -142,7 +142,7 @@ namespace Kean.Presentation.Rest.Controllers
         [ProducesResponseType(422)]
         public async Task<IActionResult> MenuPermission(int id, IEnumerable<int> permission)
         {
-            var result = await _basicCommandService.SetRoleMenuPermission(id, permission);
+            var result = await _adminCommandService.SetRoleMenuPermission(id, permission);
             return result switch
             {
                 { Success: true } => StatusCode(200),

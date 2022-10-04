@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using Kean.Domain.Basic.Models;
+using Kean.Domain.Admin.Models;
 using Kean.Domain.Identity.Models;
 using Kean.Infrastructure.Database;
 using Kean.Infrastructure.Database.Repository.Default;
@@ -20,7 +20,7 @@ namespace Kean.Infrastructure.Repository
     /// </summary>
     public class UserRepository :
         Domain.Identity.Repositories.IUserRepository,
-        Domain.Basic.Repositories.IUserRepository
+        Domain.Admin.Repositories.IUserRepository
     {
         private readonly IMapper _mapper; // 模型映射
         private readonly IDefaultDb _database; // 默认数据库
@@ -237,10 +237,10 @@ namespace Kean.Infrastructure.Repository
 
         #endregion
 
-        #region Kean.Domain.Basic.Repositories.IUserRepository 接口实现部分
+        #region Kean.Domain.Admin.Repositories.IUserRepository 接口实现部分
 
         /*
-         * 实现 Kean.Domain.Basic.Repositories.IUserRepository.IsExist(int id) 方法
+         * 实现 Kean.Domain.Admin.Repositories.IUserRepository.IsExist(int id) 方法
          */
         public async Task<bool> IsExist(int id)
         {
@@ -250,7 +250,7 @@ namespace Kean.Infrastructure.Repository
         }
 
         /*
-         * 实现 Kean.Domain.Basic.Repositories.IUserRepository.IsNameExist(string name, int? igrone) 方法
+         * 实现 Kean.Domain.Admin.Repositories.IUserRepository.IsNameExist(string name, int? igrone) 方法
          */
         public async Task<bool> IsNameExist(string name, int? igrone)
         {
@@ -263,7 +263,7 @@ namespace Kean.Infrastructure.Repository
         }
 
         /*
-         * 实现 Kean.Domain.Basic.Repositories.IUserRepository.IsAccountExist(string account, int? igrone) 方法
+         * 实现 Kean.Domain.Admin.Repositories.IUserRepository.IsAccountExist(string account, int? igrone) 方法
          */
         public async Task<bool> IsAccountExist(string account, int? igrone)
         {
@@ -276,7 +276,7 @@ namespace Kean.Infrastructure.Repository
         }
 
         /*
-         * 实现 Kean.Domain.Basic.Repositories.IUserRepository.Create(User user, Func<string, string> encode) 方法
+         * 实现 Kean.Domain.Admin.Repositories.IUserRepository.Create(User user, Func<string, string> encode) 方法
          */
         public async Task<int> Create(User user, Func<string, Task<string>> encode)
         {
@@ -310,7 +310,7 @@ namespace Kean.Infrastructure.Repository
         }
 
         /*
-         * 实现 Kean.Domain.Basic.Repositories.IUserRepository.Modify(User user) 方法
+         * 实现 Kean.Domain.Admin.Repositories.IUserRepository.Modify(User user) 方法
          */
         public async Task Modify(User user)
         {
@@ -338,7 +338,7 @@ namespace Kean.Infrastructure.Repository
         }
 
         /*
-         * 实现 Kean.Domain.Basic.Repositories.IUserRepository.Delete(int id) 方法
+         * 实现 Kean.Domain.Admin.Repositories.IUserRepository.Delete(int id) 方法
          */
         public async Task Delete(int id)
         {
@@ -351,7 +351,7 @@ namespace Kean.Infrastructure.Repository
         }
 
         /*
-         * 实现 Kean.Domain.Basic.Repositories.IUserRepository.ResetPassword(int id, Func<string, string> encode) 方法
+         * 实现 Kean.Domain.Admin.Repositories.IUserRepository.ResetPassword(int id, Func<string, string> encode) 方法
          */
         public async Task ResetPassword(int id, Func<string, Task<string>> encode)
         {
@@ -367,7 +367,7 @@ namespace Kean.Infrastructure.Repository
         }
 
         /*
-         * 实现 Kean.Domain.Basic.Repositories.IUserRepository.ClearSession(int id) 方法
+         * 实现 Kean.Domain.Admin.Repositories.IUserRepository.ClearSession(int id) 方法
          */
         public async Task ClearSession(int id)
         {

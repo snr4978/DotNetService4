@@ -20,7 +20,7 @@ namespace Kean.Application.Command
 
             // Services
             services.AddScoped<IAppService, AppService>();
-            services.AddScoped<IBasicService, BasicService>();
+            services.AddScoped<IAdminService, AdminService>();
             services.AddScoped<IIdentityService, IdentityService>();
             services.AddScoped<IMessageService, MessageService>();
         }

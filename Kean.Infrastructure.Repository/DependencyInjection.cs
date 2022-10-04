@@ -27,8 +27,8 @@ namespace Kean.Infrastructure.Repository
             services.AddScoped<Domain.Identity.Repositories.ISessionRepository, SessionRepository>();
             services.AddScoped<Domain.Identity.Repositories.IUserRepository, UserRepository>();
             services.AddScoped<Domain.Message.Repositories.IMessageRepository, MessageRepository>();
-            services.AddScoped<Domain.Basic.Repositories.IRoleRepository, RoleRepository>();
-            services.AddScoped<Domain.Basic.Repositories.IUserRepository, UserRepository>();
+            services.AddScoped<Domain.Admin.Repositories.IRoleRepository, RoleRepository>();
+            services.AddScoped<Domain.Admin.Repositories.IUserRepository, UserRepository>();
         }
     }
 }

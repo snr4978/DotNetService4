@@ -13,12 +13,12 @@ namespace Kean.Infrastructure.Repository
         /// </summary>
         public AutoMapper()
         {
-            CreateMap<Domain.Basic.Models.Role, T_SYS_ROLE>()
+            CreateMap<Domain.Admin.Models.Role, T_SYS_ROLE>()
                 .ForMember(entity => entity.ROLE_ID, options => options.MapFrom(model => model.Id))
                 .ForMember(entity => entity.ROLE_NAME, options => options.MapFrom(model => model.Name))
                 .ForMember(entity => entity.ROLE_REMARK, options => options.MapFrom(model => model.Remark));
 
-            CreateMap<Domain.Basic.Models.User, T_SYS_USER>()
+            CreateMap<Domain.Admin.Models.User, T_SYS_USER>()
                 .ForMember(entity => entity.USER_ID, options => options.MapFrom(model => model.Id))
                 .ForMember(entity => entity.USER_NAME, options => options.MapFrom(model => model.Name))
                 .ForMember(entity => entity.USER_ACCOUNT, options => options.MapFrom(model => model.Account));

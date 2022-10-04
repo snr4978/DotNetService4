@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using Kean.Application.Command.ViewModels;
-using Kean.Domain.Basic.Commands;
+using Kean.Domain.Admin.Commands;
 using Kean.Domain.Identity.Commands;
 using Kean.Domain.Message.Commands;
 

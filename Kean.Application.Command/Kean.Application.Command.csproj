@@ -13,8 +13,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\Kean.Domain.Admin\Kean.Domain.Admin.csproj" />
 		<ProjectReference Include="..\Kean.Domain.App\Kean.Domain.App.csproj" />
-		<ProjectReference Include="..\Kean.Domain.Basic\Kean.Domain.Basic.csproj" />
 		<ProjectReference Include="..\Kean.Domain.Identity\Kean.Domain.Identity.csproj" />
 		<ProjectReference Include="..\Kean.Domain.Message\Kean.Domain.Message.csproj" />
 		<ProjectReference Include="..\Kean.Infrastructure.Utilities\Kean.Infrastructure.Utilities.csproj" />

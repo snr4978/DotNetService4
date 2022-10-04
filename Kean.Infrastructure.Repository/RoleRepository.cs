@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
-using Kean.Domain.Basic.Models;
-using Kean.Domain.Basic.Repositories;
+using Kean.Domain.Admin.Models;
+using Kean.Domain.Admin.Repositories;
 using Kean.Infrastructure.Database;
 using Kean.Infrastructure.Database.Repository.Default;
 using Kean.Infrastructure.Database.Repository.Default.Entities;
@@ -30,7 +30,7 @@ namespace Kean.Infrastructure.Repository
         }
 
         /*
-         * 实现 Kean.Domain.Basic.Repositories.IRoleRepository.IsExist(int id) 方法
+         * 实现 Kean.Domain.Admin.Repositories.IRoleRepository.IsExist(int id) 方法
          */
         public async Task<bool> IsExist(int id)
         {
@@ -40,7 +40,7 @@ namespace Kean.Infrastructure.Repository
         }
 
         /*
-         * 实现 Kean.Domain.Basic.Repositories.IRoleRepository.IsExist(string name, int? igrone) 方法
+         * 实现 Kean.Domain.Admin.Repositories.IRoleRepository.IsExist(string name, int? igrone) 方法
          */
         public async Task<bool> IsExist(string name, int? igrone)
         {
@@ -53,7 +53,7 @@ namespace Kean.Infrastructure.Repository
         }
 
         /*
-         * 实现 Kean.Domain.Basic.Repositories.IRoleRepository.Create(Role role) 方法
+         * 实现 Kean.Domain.Admin.Repositories.IRoleRepository.Create(Role role) 方法
          */
         public async Task<int> Create(Role role)
         {
@@ -64,7 +64,7 @@ namespace Kean.Infrastructure.Repository
         }
 
         /*
-         * 实现 Kean.Domain.Basic.Repositories.IRoleRepository.Modify(Role role) 方法
+         * 实现 Kean.Domain.Admin.Repositories.IRoleRepository.Modify(Role role) 方法
          */
         public Task Modify(Role role)
         {
@@ -74,7 +74,7 @@ namespace Kean.Infrastructure.Repository
         }
 
         /*
-         * 实现 Kean.Domain.Basic.Repositories.IRoleRepository.Delete(int id) 方法
+         * 实现 Kean.Domain.Admin.Repositories.IRoleRepository.Delete(int id) 方法
          */
         public async Task Delete(int id)
         {
@@ -84,7 +84,7 @@ namespace Kean.Infrastructure.Repository
         }
 
         /*
-         * 实现 Kean.Domain.Basic.Repositories.IRoleRepository.SetMenuPermission(int id, IEnumerable<int> permission) 方法
+         * 实现 Kean.Domain.Admin.Repositories.IRoleRepository.SetMenuPermission(int id, IEnumerable<int> permission) 方法
          */
         public async Task SetMenuPermission(int id, IEnumerable<int> permission)
         {
@@ -105,7 +105,7 @@ namespace Kean.Infrastructure.Repository
         }
 
         /*
-         * 实现 Kean.Domain.Basic.Repositories.IRoleRepository.ClearMenuPermission(int id) 方法
+         * 实现 Kean.Domain.Admin.Repositories.IRoleRepository.ClearMenuPermission(int id) 方法
          */
         public async Task ClearMenuPermission(int id)
         {
@@ -115,7 +115,7 @@ namespace Kean.Infrastructure.Repository
         }
 
         /*
-         * 实现 Kean.Domain.Basic.Repositories.IRoleRepository.ClearUserRole(int id) 方法
+         * 实现 Kean.Domain.Admin.Repositories.IRoleRepository.ClearUserRole(int id) 方法
          */
         public async Task ClearUserRole(int id)
         {

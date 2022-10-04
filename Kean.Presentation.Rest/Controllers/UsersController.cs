@@ -14,8 +14,8 @@ namespace Kean.Presentation.Rest.Controllers
     [ApiController, Route("api/users")]
     public class UsersController : ControllerBase
     {
-        private readonly Application.Command.Interfaces.IBasicService _basicCommandService; // 身份命令服务
-        private readonly Application.Query.Interfaces.IBasicService _basicQueryService; // 身份查询服务
+        private readonly Application.Command.Interfaces.IAdminService _adminCommandService; // 身份命令服务
+        private readonly Application.Query.Interfaces.IAdminService _adminQueryService; // 身份查询服务
         private readonly Application.Command.Interfaces.IIdentityService _identityCommandService; // 身份命令服务
         private readonly Application.Query.Interfaces.IIdentityService _identityQueryService; // 身份查询服务
         private readonly Application.Command.Interfaces.IMessageService _messageCommandService; // 消息命令服务
@@ -25,15 +25,15 @@ namespace Kean.Presentation.Rest.Controllers
         /// 依赖注入
         /// </summary>
         public UsersController(
-            Application.Command.Interfaces.IBasicService basicCommandService,
-            Application.Query.Interfaces.IBasicService basicQueryService,
+            Application.Command.Interfaces.IAdminService adminCommandService,
+            Application.Query.Interfaces.IAdminService adminQueryService,
             Application.Command.Interfaces.IIdentityService identityCommandService,
             Application.Query.Interfaces.IIdentityService identityQueryService,
             Application.Command.Interfaces.IMessageService messageCommandService,
             Application.Query.Interfaces.IMessageService messageQueryService)
         {
-            _basicCommandService = basicCommandService;
-            _basicQueryService = basicQueryService;
+            _adminCommandService = adminCommandService;
+            _adminQueryService = adminQueryService;
             _identityCommandService = identityCommandService;
             _identityQueryService = identityQueryService;
             _messageCommandService = messageCommandService;
@@ -226,10 +226,10 @@ namespace Kean.Presentation.Rest.Controllers
             [FromQuery] int? offset,
             [FromQuery] int? limit)
         {
-            var items = await _basicQueryService.GetUserList(name, account, role, sort, offset, limit);
+            var items = await _adminQueryService.GetUserList(name, account, role, sort, offset, limit);
             if (offset.HasValue || limit.HasValue)
             {
-                var total = await _basicQueryService.GetUserCount(name, account, role);
+                var total = await _adminQueryService.GetUserCount(name, account, role);
                 return StatusCode(200, new { items, total });
             }
             else
@@ -250,7 +250,7 @@ namespace Kean.Presentation.Rest.Controllers
         [ProducesResponseType(422)]
         public async Task<IActionResult> Create(User user)
         {
-            var result = await _basicCommandService.CreateUser(user);
+            var result = await _adminCommandService.CreateUser(user);
             return result switch
             {
                 { Id: > 0 } => StatusCode(201, result.Id),
@@ -274,7 +274,7 @@ namespace Kean.Presentation.Rest.Controllers
         public async Task<IActionResult> Modify(int id, User user)
         {
             user.Id = id;
-            var result = await _basicCommandService.ModifyUser(user);
+            var result = await _adminCommandService.ModifyUser(user);
             return result switch
             {
                 { Success: true } => StatusCode(200),
@@ -296,7 +296,7 @@ namespace Kean.Presentation.Rest.Controllers
         {
             return batch.Method switch
             {
-                BatchMethod.Delete => StatusCode(200, await _basicCommandService.DeleteUser(batch.Data)),
+                BatchMethod.Delete => StatusCode(200, await _adminCommandService.DeleteUser(batch.Data)),
                 _ => StatusCode(405)
             };
         }
@@ -313,7 +313,7 @@ namespace Kean.Presentation.Rest.Controllers
         [ProducesResponseType(422)]
         public async Task<IActionResult> ResetPassword(int id)
         {
-            var result = await _basicCommandService.ResetPassword(id);
+            var result = await _adminCommandService.ResetPassword(id);
             return result switch
             {
                 { Success: true } => StatusCode(204),
