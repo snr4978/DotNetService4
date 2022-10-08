@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Kean.Presentation.Rest
@@ -30,7 +31,10 @@ namespace Kean.Presentation.Rest
                 {
                     throw new ArgumentNullException(nameof(bindingContext));
                 }
-                bindingContext.Result = ModelBindingResult.Success(bindingContext.HttpContext.Request.Form.Files);
+                if (bindingContext.HttpContext.Request.HasFormContentType)
+                {
+                    bindingContext.Result = ModelBindingResult.Success(bindingContext.HttpContext.Request.Form.Files?.FirstOrDefault(f => f.Name == bindingContext.FieldName));
+                }
                 return Task.CompletedTask;
             }
         }
