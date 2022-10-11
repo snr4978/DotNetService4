@@ -81,6 +81,7 @@ namespace Kean.Application.Query.Implements
         {
             var menu = new Tree<Menu>(_mapper.Map<IEnumerable<Menu>>(await _database.From<T_SYS_MENU>()
                 .OrderBy(m => m.MENU_ORDER, Order.Ascending)
+                .OrderBy(m => m.MENU_ID, Order.Ascending)
                 .Where(m => m.MENU_FLAG == true)
                 .Select()), "Id", "Parent");
             var permission = (await _database.From<T_SYS_ROLE_MENU>()
