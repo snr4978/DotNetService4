@@ -1,8 +1,10 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Orleans;
 using Orleans.Hosting;
 using Orleans.Statistics;
+using Serilog;
 using System;
 
 namespace Kean.Infrastructure.Orleans
@@ -24,6 +26,11 @@ namespace Kean.Infrastructure.Orleans
             setupAction(options);
             var siloHost = new SiloHostBuilder()
                 .ConfigureServices(options.ConfigureDelegate)
+                .ConfigureLogging((hostBuilderContext, loggingBuilder) =>
+                {
+                    loggingBuilder.AddSerilog();
+                    loggingBuilder.AddConfiguration(hostBuilderContext.Configuration);
+                })
                 .UseLocalhostClustering(
                     siloPort: options.SiloPort,
                     gatewayPort: options.GatewayPort,
