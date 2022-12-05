@@ -58,7 +58,7 @@ namespace Kean.Infrastructure.Database
             }
             else
             {
-                var schema = new MssqlSchema<T1, T2>(this, name1, name2);
+                var schema = new MssqlDapperSchema<T1, T2>(this, name1, name2);
                 _cache.Add(key, schema);
                 return schema;
             }
@@ -82,7 +82,7 @@ namespace Kean.Infrastructure.Database
             }
             else
             {
-                var schema = new MssqlSchema<T1, T2, T3>(this, name1, name2, name3);
+                var schema = new MssqlDapperSchema<T1, T2, T3>(this, name1, name2, name3);
                 _cache.Add(key, schema);
                 return schema;
             }

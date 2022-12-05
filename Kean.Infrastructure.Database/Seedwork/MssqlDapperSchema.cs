@@ -449,7 +449,7 @@ namespace Kean.Infrastructure.Database
     /// </summary>
     /// <typeparam name="T1">数据库对象映射的实体类型1</typeparam>
     /// <typeparam name="T2">数据库对象映射的实体类型2</typeparam>
-    internal sealed class MssqlSchema<T1, T2> : ISchema<T1, T2>
+    internal sealed class MssqlDapperSchema<T1, T2> : ISchema<T1, T2>
              where T1 : IEntity
              where T2 : IEntity
     {
@@ -468,7 +468,7 @@ namespace Kean.Infrastructure.Database
         private bool _distinct; // 去重标记
         private Parameters _param; // 参数
 
-        internal MssqlSchema(IDbContext context, string name1 = null, string name2 = null)
+        internal MssqlDapperSchema(IDbContext context, string name1 = null, string name2 = null)
         {
             _context = context;
             _schema = new Dictionary<string, string>
@@ -777,7 +777,7 @@ namespace Kean.Infrastructure.Database
     /// <typeparam name="T1">数据库对象映射的实体类型1</typeparam>
     /// <typeparam name="T2">数据库对象映射的实体类型2</typeparam>
     /// <typeparam name="T3">数据库对象映射的实体类型3</typeparam>
-    internal sealed class MssqlSchema<T1, T2, T3> : ISchema<T1, T2, T3>
+    internal sealed class MssqlDapperSchema<T1, T2, T3> : ISchema<T1, T2, T3>
              where T1 : IEntity
              where T2 : IEntity
              where T3 : IEntity
@@ -798,7 +798,7 @@ namespace Kean.Infrastructure.Database
         private Parameters _param; // 参数
         private List<string> _alias; // 已连接对象
 
-        internal MssqlSchema(IDbContext context, string name1 = null, string name2 = null, string name3 = null)
+        internal MssqlDapperSchema(IDbContext context, string name1 = null, string name2 = null, string name3 = null)
         {
             _context = context;
             _schema = new Dictionary<string, string>
