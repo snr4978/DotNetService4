@@ -44,8 +44,9 @@ namespace Kean.Presentation.Rest
                 .AddSwaggerGen(options =>
                 {
                     options.OperationFilter<SwaggerFilter>();
+                    options.CustomSchemaIds(_ => Guid.NewGuid().ToString("N"));
                     options.OrderActionsBy(a => a.RelativePath);
-                    //options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, "Swagger.xml"), true);
+                    //options.IncludeXmlComments("Swagger.xml", true);
                     options.SwaggerDoc(_configuration["Swagger:Version"], new()
                     {
                         Title = _configuration["Swagger:Title"],
@@ -96,8 +97,8 @@ namespace Kean.Presentation.Rest
                 {
                     options.Filters.Add<ActionFilter>();
                     options.Filters.Add<ExceptionFilter>();
-                })
-                .Services)
+                    options.InputFormatters.Add(new TextPlainInputFormatter());
+                }))
             .Startup();
 
         /// <summary>

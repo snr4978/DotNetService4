@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.Filters;
+﻿using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace Kean.Presentation.Rest
 {
@@ -27,12 +26,7 @@ namespace Kean.Presentation.Rest
         /// <param name="context">操作执行的上下文</param>
         public void OnActionExecuted(ActionExecutedContext context)
         {
-            // 调用方法发生异常时，向调用者反馈系统错误信息
-            if (context.Exception != null)
-            {
-                context.HttpContext.Response.StatusCode = 500;
-                context.HttpContext.Response.WriteAsync(context.Exception.ToString());
-            }
+            
         }
     }
 }

@@ -25,10 +25,7 @@ namespace Kean.Presentation.Rest
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration((_, builder) => builder.Add(new ConfigurationSource(builder.Build())))
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseSerilog((context, logger) => logger.ReadFrom.Configuration(context.Configuration));
-                    webBuilder.UseStartup<Startup>();
-                });
+                .ConfigureWebHostDefaults(webBuilder => webBuilder.UseStartup<Startup>())
+                .UseSerilog((context, logger) => logger.ReadFrom.Configuration(context.Configuration));
     }
 }

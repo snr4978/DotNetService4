@@ -3,6 +3,7 @@ using Kean.Infrastructure.Soap;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.SignalR;
+using System;
 using System.Threading.Tasks;
 
 namespace Kean.Presentation.Rest
@@ -25,7 +26,7 @@ namespace Kean.Presentation.Rest
         /// <summary>
         /// 执行方法
         /// </summary>
-        public async Task InvokeAsync(HttpContext context, IIdentityService service)
+        public async Task InvokeAsync(HttpContext context, IServiceProvider serviceProvider, IIdentityService service)
         {
             // 令牌
             var token = context.Request.Headers["Token"];
@@ -40,30 +41,35 @@ namespace Kean.Presentation.Rest
             }
             else
             {
-                // 对未标记 Anonymous 特性的 Action 以及非 SignalR 进行身份验证
-                if (endpoint.Metadata.GetMetadata<AnonymousAttribute>() != null 
-                    || endpoint.Metadata.GetMetadata<HubMetadata>() != null
-                    || endpoint.Metadata.GetMetadata<SoapMetadata>() != null)
+                // 自定义身份验证
+                var authentication = endpoint.Metadata.GetMetadata<CustomAuthenticationAttribute>();
+                if (authentication == null || await authentication.Authenticate(context, serviceProvider))
                 {
-                    await _next(context);
-                }
-                else
-                {
-                    if (token.Count == 0)
+                    // 对未标记 Anonymous 特性的 Action 以及非 SignalR 进行内置身份验证
+                    if (endpoint.Metadata.GetMetadata<AnonymousAttribute>() != null
+                        || endpoint.Metadata.GetMetadata<HubMetadata>() != null
+                        || endpoint.Metadata.GetMetadata<SoapMetadata>() != null)
                     {
-                        context.Response.StatusCode = 401;
+                        await _next(context);
                     }
                     else
                     {
-                        var session = await service.Authenticate(token);
-                        if (session.HasValue)
+                        if (token.Count == 0)
                         {
-                            context.Items["session"] = session.Value;
-                            await _next(context);
+                            context.Response.StatusCode = 401;
                         }
                         else
                         {
-                            context.Response.StatusCode = 401;
+                            var session = await service.Authenticate(token);
+                            if (session.HasValue)
+                            {
+                                context.Items["session"] = session.Value;
+                                await _next(context);
+                            }
+                            else
+                            {
+                                context.Response.StatusCode = 401;
+                            }
                         }
                     }
                 }

@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Linq;
 
 namespace Kean.Presentation.Rest
 {
@@ -9,6 +12,16 @@ namespace Kean.Presentation.Rest
     /// </summary>
     public static class ServiceCollectionExtensions
     {
+        /// <summary>
+        /// 向服务描述中追加启动过滤
+        /// </summary>
+        /// <param name="services">服务描述符</param>
+        /// <returns>服务描述符</returns>
+        public static IServiceCollection Startup(this IServiceCollection services)
+        {
+            return services.AddTransient<IStartupFilter, StartupFilter>();
+        }
+
         /// <summary>
         /// 向服务描述中追加配置类型
         /// </summary>
@@ -22,13 +35,22 @@ namespace Kean.Presentation.Rest
         }
 
         /// <summary>
-        /// 向服务描述中追加启动过滤
+        /// 对 Microsoft.Extensions.DependencyInjection.MvcServiceCollectionExtensions.AddControllers 的扩展，固化一些 IMvcBuilder 的后续操作
         /// </summary>
         /// <param name="services">服务描述符</param>
+        /// <param name="configure">配置选项</param>
         /// <returns>服务描述符</returns>
-        public static IServiceCollection Startup(this IServiceCollection services)
+        public static IServiceCollection AddControllers(this IServiceCollection services, Action<MvcOptions> configure)
         {
-            return services.AddTransient<IStartupFilter, StartupFilter>();
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            return MvcServiceCollectionExtensions.AddControllers(services, configure)
+                .AddXmlSerializerFormatters()
+                .ConfigureApiBehaviorOptions(options =>
+                {
+                    options.InvalidModelStateResponseFactory = context =>
+                        (context.ActionDescriptor.EndpointMetadata.FirstOrDefault(a => a is BadRequestFallbackAttribute) as BadRequestFallbackAttribute)?.Result() ?? new BadRequestResult();
+                })
+                .Services;
         }
     }
 }

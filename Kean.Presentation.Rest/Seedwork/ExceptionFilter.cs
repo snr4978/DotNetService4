@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc.Filters;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Logging;
+using System.Linq;
 
 namespace Kean.Presentation.Rest
 {
@@ -26,6 +28,12 @@ namespace Kean.Presentation.Rest
         {
             _logger.LogError(context.Exception, "{Method} '{Path}' Exception:", context.HttpContext.Request.Method, context.HttpContext.Request.Path);
             context.ExceptionHandled = true;
+            context.Result = (context.ActionDescriptor.EndpointMetadata.FirstOrDefault(a => a is ServerErrorFallbackAttribute) as ServerErrorFallbackAttribute)?.Result(context.Exception) ??
+                new ContentResult
+                {
+                    StatusCode = 500,
+                    Content = context.Exception.Message
+                };
         }
     }
 }
