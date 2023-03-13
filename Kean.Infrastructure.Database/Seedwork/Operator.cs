@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Linq;
 using System.Linq.Expressions;
 
@@ -56,18 +57,30 @@ namespace Kean.Infrastructure.Database
                     {
                         left = expression.Arguments[1];
                         right = expression.Arguments[0];
+                        if (left is MemberExpression me && me.Member.Name == "Value" && me.Expression.Type.IsGenericType && me.Expression.Type.GetGenericTypeDefinition() == typeof(Nullable<>))
+                        {
+                            left = me.Expression;
+                        }
                         return "IN";
                     }
                     else if (expression.Method.DeclaringType.IsAssignableTo(typeof(IEnumerable)))
                     {
                         left = expression.Arguments[0];
                         right = expression.Object;
+                        if (left is MemberExpression me && me.Member.Name == "Value" && me.Expression.Type.IsGenericType && me.Expression.Type.GetGenericTypeDefinition() == typeof(Nullable<>))
+                        {
+                            left = me.Expression;
+                        }
                         return "IN";
                     }
                     else if (expression.Method.DeclaringType == typeof(Query))
                     {
                         left = expression.Arguments[0];
                         right = expression.Object;
+                        if (left is MemberExpression me && me.Member.Name == "Value" && me.Expression.Type.IsGenericType && me.Expression.Type.GetGenericTypeDefinition() == typeof(Nullable<>))
+                        {
+                            left = me.Expression;
+                        }
                         return "IN";
                     }
                     break;
