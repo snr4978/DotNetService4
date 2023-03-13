@@ -6,14 +6,15 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using static Dapper.SqlMapper;
 
 namespace Kean.Infrastructure.Database
 {
     /// <summary>
-    /// 基于 Dapper 的 SQL Server 数据库对象的操作
+    /// 基于 Dapper 的 Oracle 数据库对象的操作
     /// </summary>
     /// <typeparam name="T">数据库对象映射的实体类型</typeparam>
-    internal sealed class MssqlDapperSchema<T> : ISchema<T>
+    internal sealed class OracleDapperSchema<T> : ISchema<T>
              where T : IEntity
     {
         private readonly IDbContext _context; // 上下文
@@ -23,17 +24,16 @@ namespace Kean.Infrastructure.Database
         private string _order; // 排序语句
         private string _group; // 分组语句
         private string _having; // 分组条件语句
-        private string _lock; // 锁类型
         private int _skip; // 跳过数
         private int _take; // 结果数
         private bool _distinct; // 去重标记
         private Parameters _param; // 参数（查询）
         private Parameters _value; // 值（更新）
 
-        internal MssqlDapperSchema(IDbContext context, string name = null)
+        internal OracleDapperSchema(IDbContext context, string name = null)
         {
             _context = context;
-            _schema = $"[{name ?? typeof(T).Name.Split('`')[0]}]";
+            _schema = $"\"{name ?? typeof(T).Name.Split('`')[0]}\"";
             Initialize();
         }
 
@@ -42,8 +42,8 @@ namespace Kean.Infrastructure.Database
             _columns = typeof(T).GetProperties().Select(p =>
             (
                 p.Name,
-                $"[{p.Name}]",
-                $"[{p.Name}]",
+                $"\"{p.Name}\"",
+                $"\"{p.Name}\"",
                 p.GetCustomAttribute<IdentifierAttribute>(),
                 p.GetCustomAttribute<ComputedAttribute>()
             ));
@@ -51,7 +51,6 @@ namespace Kean.Infrastructure.Database
             _order = null;
             _group = null;
             _having = null;
-            _lock = null;
             _skip = 0;
             _take = 0;
             _distinct = false;
@@ -67,16 +66,18 @@ namespace Kean.Infrastructure.Database
                 return string.Format("INSERT INTO {0} ({1}) VALUES ({2})",
                     _schema,
                     string.Join(',', _columns.Where(c => c.computed == null).Select(c => c.name)),
-                    string.Join(',', _columns.Where(c => c.computed == null).Select(c => $"@{c.property}"))
+                    string.Join(',', _columns.Where(c => c.computed == null).Select(c => $":{c.property}"))
                 );
             }
             else
             {
-                return string.Format("INSERT INTO {0} ({1}) OUTPUT INSERTED.{3} VALUES ({2})",
+                return string.Format("INSERT INTO {0} ({1},{3}) VALUES ({2},{4}) RETURNING {1} INTO :{5}",
                     _schema,
+                    increment.name,
+                    $"{_schema[1..^1]}_SEQ.NEXTVAL",
                     string.Join(',', _columns.Where(c => c.property != increment.property && c.computed == null).Select(c => c.name)),
-                    string.Join(',', _columns.Where(c => c.property != increment.property && c.computed == null).Select(c => $"@{c.property}")),
-                    increment.name
+                    string.Join(',', _columns.Where(c => c.property != increment.property && c.computed == null).Select(c => $":{c.property}")),
+                    increment.property
                 );
             }
         }
@@ -86,7 +87,7 @@ namespace Kean.Infrastructure.Database
             var i = 0;
             return string.Format("UPDATE {0} SET {1} WHERE {2}",
                 _schema,
-                string.Join(',', _value.ParameterNames.Select(v => $"[{v}]=@v{i++}")),
+                string.Join(',', _value.ParameterNames.Select(v => $"\"{v}\"=:v{i++}")),
                 _where
             );
         }
@@ -102,22 +103,30 @@ namespace Kean.Infrastructure.Database
         private string BuildSelect()
         {
             var buffer = new StringBuilder("SELECT");
-            if (_skip == 0 && _take > 0)
-            {
-                buffer.Append($" TOP {_take}");
-            }
             if (_distinct)
             {
                 buffer.Append(" DISTINCT");
             }
-            buffer.Append($" {string.Join(',', _columns.Select(c => c.name == c.alias ? c.name : $"{c.name} AS {c.alias}"))} FROM {_schema}");
-            if (_lock != null)
+            buffer.Append($" {string.Join(',', _columns.Select(c => c.name == c.alias ? c.name : $"{c.name} AS {c.alias}"))}");
+            if (_skip > 0)
             {
-                buffer.Append($" WITH({_lock})");
+                buffer.Append(",ROWNUM AS \"ROW_NUM\"");
             }
-            if (_where != null)
+            buffer.Append($" FROM {_schema}");
+            if (_where == null)
+            {
+                if (_skip == 0 && _take > 0)
+                {
+                    buffer.Append($" WHERE ROWNUM<={_take}");
+                }
+            }
+            else
             {
                 buffer.Append($" WHERE {_where}");
+                if (_skip == 0 && _take > 0)
+                {
+                    buffer.Append($" AND ROWNUM<={_take}");
+                }
             }
             if (_group != null)
             {
@@ -131,24 +140,23 @@ namespace Kean.Infrastructure.Database
             {
                 buffer.Append($" ORDER BY {_order}");
             }
-            if (_skip > 0)
+            if (_skip == 0)
             {
-                if(_order == null)
-                {
-                    buffer.Append(" ORDER BY (SELECT 0)");
-                }
-                buffer.Append($" OFFSET {_skip} ROWS");
-                if (_take > 0)
-                {
-                    buffer.Append($" FETCH NEXT {_take} ROWS ONLY");
-                }
+                return buffer.ToString();
             }
-            return buffer.ToString();
+            else
+            {
+                return string.Format("SELECT {0} FROM ({1}) WHERE \"ROW_NUM\" > {2}{3}",
+                    string.Join(',', _columns.Select(c => c.alias)),
+                    buffer,
+                    _skip,
+                    _take == 0 ? string.Empty : $" AND \"ROW_NUM\" <= {_skip + _take}");
+            }
         }
 
         public Query Query(Expression<Func<T, object>> expression)
         {
-            var mapping = MappingExpression.Build(expression, null, "[]");
+            var mapping = MappingExpression.Build(expression, null, "\"\"");
             _columns = mapping.Select(i =>
             (
                 default(string),
@@ -179,10 +187,12 @@ namespace Kean.Infrastructure.Database
             else
             {
                 var prop = typeof(T).GetProperty(increment.property);
-                var id = await _context.ExecuteScalarAsync(sql, entity, _context.Transaction);
-                prop.SetValue(entity, id);
+                var arg = Expression.Parameter(typeof(T), "a");
+                var param = new DynamicParameters(entity)
+                    .Output(entity, Expression.Lambda<Func<T, object>>(Expression.Convert(Expression.Property(arg, prop), typeof(object)), arg));
+                await _context.ExecuteAsync(sql, param, _context.Transaction);
                 Initialize();
-                return id;
+                return prop.GetValue(entity);
             }
         }
 
@@ -195,7 +205,7 @@ namespace Kean.Infrastructure.Database
                 .Select(c =>
                 {
                     _param.Add($"p{i}", typeof(T).GetProperty(c.property).GetValue(entity));
-                    return $"{c.name}=@p{i++}";
+                    return $"{c.name}=:p{i++}";
                 }));
             i = 0;
             _value = new Parameters();
@@ -256,7 +266,7 @@ namespace Kean.Infrastructure.Database
                 .Select(c =>
                 {
                     _param.Add($"p{i}", typeof(T).GetProperty(c.property).GetValue(entity));
-                    return $"{c.name}=@p{i++}";
+                    return $"{c.name}=:p{i++}";
                 }));
             var sql = BuildDelete();
             var result = await _context.ExecuteAsync(sql, _param, _context.Transaction);
@@ -288,7 +298,7 @@ namespace Kean.Infrastructure.Database
 
         public async Task<IEnumerable<dynamic>> Select(Expression<Func<T, dynamic>> expression)
         {
-            var mapping = MappingExpression.Build(expression, null, "[]");
+            var mapping = MappingExpression.Build(expression, null, "\"\"");
             _columns = mapping.Select(i =>
             (
                 default(string),
@@ -307,11 +317,11 @@ namespace Kean.Infrastructure.Database
         {
             if (_where == null)
             {
-                _where = ConditionExpression.Build(expression, null, "@", "[]", ref _param);
+                _where = ConditionExpression.Build(expression, null, ":", "\"\"", ref _param);
             }
             else
             {
-                _where = $"{_where} AND {ConditionExpression.Build(expression, null, "@", "[]", ref _param)}";
+                _where = $"{_where} AND {ConditionExpression.Build(expression, null, ":", "\"\"", ref _param)}";
             }
             return this;
         }
@@ -370,7 +380,7 @@ namespace Kean.Infrastructure.Database
 
         public ISchema<T> OrderBy(Expression<Func<T, object>> expression, Order order)
         {
-            var buffer = ColumnExpression.Build(expression, null, "[]");
+            var buffer = ColumnExpression.Build(expression, null, "\"\"");
             if (order == Order.Descending)
             {
                 buffer = $"{buffer} DESC";
@@ -394,7 +404,7 @@ namespace Kean.Infrastructure.Database
 
         public ISchema<T> GroupBy(Expression<Func<T, object>> expression)
         {
-            var buffer = ColumnExpression.Build(expression, null, "[]");
+            var buffer = ColumnExpression.Build(expression, null, "\"\"");
             if (_group == null)
             {
                 _group = buffer;
@@ -414,7 +424,7 @@ namespace Kean.Infrastructure.Database
 
         public ISchema<T> Having(Expression<Func<T, bool?>> expression)
         {
-            _having = ConditionExpression.Build(expression, null, "@", "[]", ref _param);
+            _having = ConditionExpression.Build(expression, null, ":", "\"\"", ref _param);
             return this;
         }
 
@@ -426,8 +436,7 @@ namespace Kean.Infrastructure.Database
 
         public ISchema<T> Lock(Lock type)
         {
-            _lock = type.ToString().ToUpper();
-            return this;
+            throw new NotImplementedException();
         }
 
         public ISchema<T> Skip(int count)
@@ -450,11 +459,11 @@ namespace Kean.Infrastructure.Database
     }
 
     /// <summary>
-    /// 基于 Dapper 的 SQL Server 数据库对象的操作
+    /// 基于 Dapper 的 Oracle 数据库对象的操作
     /// </summary>
     /// <typeparam name="T1">数据库对象映射的实体类型1</typeparam>
     /// <typeparam name="T2">数据库对象映射的实体类型2</typeparam>
-    internal sealed class MssqlDapperSchema<T1, T2> : ISchema<T1, T2>
+    internal sealed class OracleDapperSchema<T1, T2> : ISchema<T1, T2>
              where T1 : IEntity
              where T2 : IEntity
     {
@@ -471,13 +480,13 @@ namespace Kean.Infrastructure.Database
         private bool _distinct; // 去重标记
         private Parameters _param; // 参数
 
-        internal MssqlDapperSchema(IDbContext context, string name1 = null, string name2 = null)
+        internal OracleDapperSchema(IDbContext context, string name1 = null, string name2 = null)
         {
             _context = context;
             _schema = new Dictionary<string, string>
             {
-                { typeof(T1).FullName, $"[{name1 ?? typeof(T1).Name.Split('`')[0]}]" },
-                { typeof(T2).FullName, $"[{name2 ?? typeof(T2).Name.Split('`')[0]}]" }
+                { typeof(T1).FullName, $"\"{name1 ?? typeof(T1).Name.Split('`')[0]}\"" },
+                { typeof(T2).FullName, $"\"{name2 ?? typeof(T2).Name.Split('`')[0]}\"" }
             };
             Initialize();
         }
@@ -486,13 +495,13 @@ namespace Kean.Infrastructure.Database
         {
             _columns = typeof(T1).GetProperties().Select(p =>
             (
-                $"[T1].[{p.Name}]",
-                $"[{p.Name}]"
+                $"\"T1\".\"{p.Name}\"",
+                $"\"{p.Name}\""
             ))
             .Concat(typeof(T2).GetProperties().Select(p =>
             (
-                $"[T2].[{p.Name}]",
-                $"[{p.Name}]"
+                $"\"T2\".\"{p.Name}\"",
+                $"\"{p.Name}\""
             )));
             _join = null;
             _where = null;
@@ -512,18 +521,30 @@ namespace Kean.Infrastructure.Database
                 throw new Exception("未设置连接条件");
             }
             var buffer = new StringBuilder("SELECT");
-            if (_skip == 0 && _take > 0)
-            {
-                buffer.Append($" TOP {_take}");
-            }
             if (_distinct)
             {
                 buffer.Append(" DISTINCT");
             }
-            buffer.Append($" {string.Join(',', _columns.Select(c => c.name == c.alias ? c.name : $"{c.name} AS {c.alias}"))} FROM {_join}");
-            if (_where != null)
+            buffer.Append($" {string.Join(',', _columns.Select(c => c.name == c.alias ? c.name : $"{c.name} AS {c.alias}"))}");
+            if (_skip > 0)
+            {
+                buffer.Append(",ROWNUM AS \"ROW_NUM\"");
+            }
+            buffer.Append($" FROM {_join}");
+            if (_where == null)
+            {
+                if (_skip == 0 && _take > 0)
+                {
+                    buffer.Append($" WHERE ROWNUM<={_take}");
+                }
+            }
+            else
             {
                 buffer.Append($" WHERE {_where}");
+                if (_skip == 0 && _take > 0)
+                {
+                    buffer.Append($" AND ROWNUM<={_take}");
+                }
             }
             if (_group != null)
             {
@@ -537,24 +558,23 @@ namespace Kean.Infrastructure.Database
             {
                 buffer.Append($" ORDER BY {_order}");
             }
-            if (_skip > 0)
+            if (_skip == 0)
             {
-                if (_order == null)
-                {
-                    buffer.Append(" ORDER BY (SELECT 0)");
-                }
-                buffer.Append($" OFFSET {_skip} ROWS");
-                if (_take > 0)
-                {
-                    buffer.Append($" FETCH NEXT {_take} ROWS ONLY");
-                }
+                return buffer.ToString();
             }
-            return buffer.ToString();
+            else
+            {
+                return string.Format("SELECT {0} FROM ({1}) WHERE \"ROW_NUM\" > {2}{3}",
+                    string.Join(',', _columns.Select(c => c.alias)),
+                    buffer,
+                    _skip,
+                    _take == 0 ? string.Empty : $" AND \"ROW_NUM\" <= {_skip + _take}");
+            }
         }
 
         public Query Query(Expression<Func<T1, T2, object>> expression)
         {
-            var mapping = MappingExpression.Build(expression, new ExpressionParameters(expression, "T1", "T2"), "[]");
+            var mapping = MappingExpression.Build(expression, new ExpressionParameters(expression, "T1", "T2"), "\"\"");
             _columns = mapping.Select(i =>
             (
                 i.Item1,
@@ -578,7 +598,7 @@ namespace Kean.Infrastructure.Database
 
         public async Task<IEnumerable<dynamic>> Select(Expression<Func<T1, T2, dynamic>> expression)
         {
-            var mapping = MappingExpression.Build(expression, new ExpressionParameters(expression, "T1", "T2"), "[]");
+            var mapping = MappingExpression.Build(expression, new ExpressionParameters(expression, "T1", "T2"), "\"\"");
             _columns = mapping.Select(i =>
             (
                 i.Item1,
@@ -592,13 +612,13 @@ namespace Kean.Infrastructure.Database
 
         public ISchema<T1, T2> Join(Join join, Expression<Func<T1, T2, bool?>> expression)
         {
-            Join(join, ConditionExpression.Build(expression, new ExpressionParameters(expression, "T1", "T2"), "@", "[]", ref _param));
+            Join(join, ConditionExpression.Build(expression, new ExpressionParameters(expression, "T1", "T2"), ":", "\"\"", ref _param));
             return this;
         }
 
         public ISchema<T1, T2> Join(Join join, string expression)
         {
-            _join = $"{_schema[typeof(T1).FullName]} AS [T1] {join.ToString().ToUpper()}{(join == Database.Join.Inner ? string.Empty : " OUTER")} JOIN {_schema[typeof(T2).FullName]} AS [T2] ON {expression}";
+            _join = $"{_schema[typeof(T1).FullName]} \"T1\" {join.ToString().ToUpper()}{(join == Database.Join.Inner ? string.Empty : " OUTER")} JOIN {_schema[typeof(T2).FullName]} \"T2\" ON {expression}";
             return this;
         }
 
@@ -631,11 +651,11 @@ namespace Kean.Infrastructure.Database
         {
             if (_where == null)
             {
-                _where = ConditionExpression.Build(expression, new ExpressionParameters(expression, "T1", "T2"), "@", "[]", ref _param);
+                _where = ConditionExpression.Build(expression, new ExpressionParameters(expression, "T1", "T2"), ":", "\"\"", ref _param);
             }
             else
             {
-                _where = $"{_where} AND {ConditionExpression.Build(expression, new ExpressionParameters(expression, "T1", "T2"), "@", "[]", ref _param)}";
+                _where = $"{_where} AND {ConditionExpression.Build(expression, new ExpressionParameters(expression, "T1", "T2"), ":", "\"\"", ref _param)}";
             }
             return this;
         }
@@ -694,7 +714,7 @@ namespace Kean.Infrastructure.Database
 
         public ISchema<T1, T2> OrderBy(Expression<Func<T1, T2, object>> expression, Order order)
         {
-            var buffer = ColumnExpression.Build(expression, new ExpressionParameters(expression, "T1", "T2"), "[]");
+            var buffer = ColumnExpression.Build(expression, new ExpressionParameters(expression, "T1", "T2"), "\"\"");
             if (order == Order.Descending)
             {
                 buffer = $"{buffer} DESC";
@@ -718,7 +738,7 @@ namespace Kean.Infrastructure.Database
 
         public ISchema<T1, T2> GroupBy(Expression<Func<T1, T2, object>> expression)
         {
-            var buffer = ColumnExpression.Build(expression, new ExpressionParameters(expression, "T1", "T2"), "[]");
+            var buffer = ColumnExpression.Build(expression, new ExpressionParameters(expression, "T1", "T2"), "\"\"");
             if (_group == null)
             {
                 _group = buffer;
@@ -738,7 +758,7 @@ namespace Kean.Infrastructure.Database
 
         public ISchema<T1, T2> Having(Expression<Func<T1, T2, bool?>> expression)
         {
-            _having = ConditionExpression.Build(expression, new ExpressionParameters(expression, "T1", "T2"), "@", "[]", ref _param);
+            _having = ConditionExpression.Build(expression, new ExpressionParameters(expression, "T1", "T2"), ":", "\"\"", ref _param);
             return this;
         }
 
@@ -768,12 +788,12 @@ namespace Kean.Infrastructure.Database
     }
 
     /// <summary>
-    /// 基于 Dapper 的 SQL Server 数据库对象的操作
+    /// 基于 Dapper 的 Oracle 数据库对象的操作
     /// </summary>
     /// <typeparam name="T1">数据库对象映射的实体类型1</typeparam>
     /// <typeparam name="T2">数据库对象映射的实体类型2</typeparam>
     /// <typeparam name="T3">数据库对象映射的实体类型3</typeparam>
-    internal sealed class MssqlDapperSchema<T1, T2, T3> : ISchema<T1, T2, T3>
+    internal sealed class OracleDapperSchema<T1, T2, T3> : ISchema<T1, T2, T3>
              where T1 : IEntity
              where T2 : IEntity
              where T3 : IEntity
@@ -792,14 +812,14 @@ namespace Kean.Infrastructure.Database
         private Parameters _param; // 参数
         private List<string> _alias; // 已连接对象
 
-        internal MssqlDapperSchema(IDbContext context, string name1 = null, string name2 = null, string name3 = null)
+        internal OracleDapperSchema(IDbContext context, string name1 = null, string name2 = null, string name3 = null)
         {
             _context = context;
             _schema = new Dictionary<string, string>
             {
-                { typeof(T1).FullName, $"[{name1 ?? typeof(T1).Name.Split('`')[0]}]" },
-                { typeof(T2).FullName, $"[{name2 ?? typeof(T2).Name.Split('`')[0]}]" },
-                { typeof(T3).FullName, $"[{name3 ?? typeof(T3).Name.Split('`')[0]}]" }
+                { typeof(T1).FullName, $"\"{name1 ?? typeof(T1).Name.Split('`')[0]}\"" },
+                { typeof(T2).FullName, $"\"{name2 ?? typeof(T2).Name.Split('`')[0]}\"" },
+                { typeof(T3).FullName, $"\"{name3 ?? typeof(T3).Name.Split('`')[0]}\"" }
             };
             Initialize();
         }
@@ -808,18 +828,18 @@ namespace Kean.Infrastructure.Database
         {
             _columns = typeof(T1).GetProperties().Select(p =>
             (
-                $"[T1].[{p.Name}]",
-                $"[{p.Name}]"
+                $"\"T1\".\"{p.Name}\"",
+                $"\"{p.Name}\""
             ))
             .Concat(typeof(T2).GetProperties().Select(p =>
             (
-                $"[T2].[{p.Name}]",
-                $"[{p.Name}]"
+                $"\"T2\".\"{p.Name}\"",
+                $"\"{p.Name}\""
             )))
             .Concat(typeof(T3).GetProperties().Select(p =>
             (
-                $"[T3].[{p.Name}]",
-                $"[{p.Name}]"
+                $"\"T3\".\"{p.Name}\"",
+                $"\"{p.Name}\""
             )));
             _join = null;
             _where = null;
@@ -840,18 +860,30 @@ namespace Kean.Infrastructure.Database
                 throw new Exception("未设置连接条件");
             }
             var buffer = new StringBuilder("SELECT");
-            if (_skip == 0 && _take > 0)
-            {
-                buffer.Append($" TOP {_take}");
-            }
             if (_distinct)
             {
                 buffer.Append(" DISTINCT");
             }
-            buffer.Append($" {string.Join(',', _columns.Select(c => c.name == c.alias ? c.name : $"{c.name} AS {c.alias}"))} FROM {_join}");
-            if (_where != null)
+            buffer.Append($" {string.Join(',', _columns.Select(c => c.name == c.alias ? c.name : $"{c.name} AS {c.alias}"))}");
+            if (_skip > 0)
+            {
+                buffer.Append(",ROWNUM AS \"ROW_NUM\"");
+            }
+            buffer.Append($" FROM {_join}");
+            if (_where == null)
+            {
+                if (_skip == 0 && _take > 0)
+                {
+                    buffer.Append($" WHERE ROWNUM<={_take}");
+                }
+            }
+            else
             {
                 buffer.Append($" WHERE {_where}");
+                if (_skip == 0 && _take > 0)
+                {
+                    buffer.Append($" AND ROWNUM<={_take}");
+                }
             }
             if (_group != null)
             {
@@ -865,24 +897,23 @@ namespace Kean.Infrastructure.Database
             {
                 buffer.Append($" ORDER BY {_order}");
             }
-            if (_skip > 0)
+            if (_skip == 0)
             {
-                if (_order == null)
-                {
-                    buffer.Append(" ORDER BY (SELECT 0)");
-                }
-                buffer.Append($" OFFSET {_skip} ROWS");
-                if (_take > 0)
-                {
-                    buffer.Append($" FETCH NEXT {_take} ROWS ONLY");
-                }
+                return buffer.ToString();
             }
-            return buffer.ToString();
+            else
+            {
+                return string.Format("SELECT {0} FROM ({1}) WHERE \"ROW_NUM\" > {2}{3}",
+                    string.Join(',', _columns.Select(c => c.alias)),
+                    buffer,
+                    _skip,
+                    _take == 0 ? string.Empty : $" AND \"ROW_NUM\" <= {_skip + _take}");
+            }
         }
 
         public Query Query(Expression<Func<T1, T2, T3, object>> expression)
         {
-            var mapping = MappingExpression.Build(expression, new ExpressionParameters(expression, "T1", "T2", "T3"), "[]");
+            var mapping = MappingExpression.Build(expression, new ExpressionParameters(expression, "T1", "T2", "T3"), "\"\"");
             _columns = mapping.Select(i =>
             (
                 i.Item1,
@@ -906,7 +937,7 @@ namespace Kean.Infrastructure.Database
 
         public async Task<IEnumerable<dynamic>> Select(Expression<Func<T1, T2, T3, dynamic>> expression)
         {
-            var mapping = MappingExpression.Build(expression, new ExpressionParameters(expression, "T1", "T2", "T3"), "[]");
+            var mapping = MappingExpression.Build(expression, new ExpressionParameters(expression, "T1", "T2", "T3"), "\"\"");
             _columns = mapping.Select(i =>
             (
                 i.Item1,
@@ -924,7 +955,7 @@ namespace Kean.Infrastructure.Database
         {
             var dic = new Dictionary<string, string>() { { typeof(T1).FullName, "T1" }, { typeof(T2).FullName, "T2" }, { typeof(T3).FullName, "T3" } };
             var alias = new string[] { dic[typeof(U1).FullName], dic[typeof(U2).FullName] };
-            Join<U1, U2>(join, ConditionExpression.Build(expression, new ExpressionParameters(expression, alias), "@", "[]", ref _param));
+            Join<U1, U2>(join, ConditionExpression.Build(expression, new ExpressionParameters(expression, alias), ":", "\"\"", ref _param));
             return this;
         }
 
@@ -937,7 +968,7 @@ namespace Kean.Infrastructure.Database
             if (_alias.Count == 0)
             {
                 _alias.AddRange(alias);
-                _join = $"{_schema[typeof(U1).FullName]} AS [{alias[0]}] {join.ToString().ToUpper()}{(join == Database.Join.Inner ? string.Empty : " OUTER")} JOIN {_schema[typeof(U2).FullName]} AS [{alias[1]}]";
+                _join = $"{_schema[typeof(U1).FullName]} \"{alias[0]}\" {join.ToString().ToUpper()}{(join == Database.Join.Inner ? string.Empty : " OUTER")} JOIN {_schema[typeof(U2).FullName]} \"{alias[1]}\"";
             }
             else
             {
@@ -945,12 +976,12 @@ namespace Kean.Infrastructure.Database
                 if (_alias.Exists(s => s == alias[1]))
                 {
                     _alias.Add(alias[0]);
-                    _join = $"{_join} {_schema[typeof(U1).FullName]} AS [{alias[0]}]";
+                    _join = $"{_join} {_schema[typeof(U1).FullName]} \"{alias[0]}\"";
                 }
                 else
                 {
                     _alias.Add(alias[1]);
-                    _join = $"{_join} {_schema[typeof(U2).FullName]} AS [{alias[1]}]";
+                    _join = $"{_join} {_schema[typeof(U2).FullName]} \"{alias[1]}\"";
                 }
             }
             _join = $"{_join} ON {expression}";
@@ -990,11 +1021,11 @@ namespace Kean.Infrastructure.Database
         {
             if (_where == null)
             {
-                _where = ConditionExpression.Build(expression, new ExpressionParameters(expression, "T1", "T2", "T3"), "@", "[]", ref _param);
+                _where = ConditionExpression.Build(expression, new ExpressionParameters(expression, "T1", "T2", "T3"), ":", "\"\"", ref _param);
             }
             else
             {
-                _where = $"{_where} AND {ConditionExpression.Build(expression, new ExpressionParameters(expression, "T1", "T2", "T3"), "@", "[]", ref _param)}";
+                _where = $"{_where} AND {ConditionExpression.Build(expression, new ExpressionParameters(expression, "T1", "T2", "T3"), ":", "\"\"", ref _param)}";
             }
             return this;
         }
@@ -1053,7 +1084,7 @@ namespace Kean.Infrastructure.Database
 
         public ISchema<T1, T2, T3> OrderBy(Expression<Func<T1, T2, T3, object>> expression, Order order)
         {
-            var buffer = ColumnExpression.Build(expression, new ExpressionParameters(expression, "T1", "T2", "T3"), "[]");
+            var buffer = ColumnExpression.Build(expression, new ExpressionParameters(expression, "T1", "T2", "T3"), "\"\"");
             if (order == Order.Descending)
             {
                 buffer = $"{buffer} DESC";
@@ -1077,7 +1108,7 @@ namespace Kean.Infrastructure.Database
 
         public ISchema<T1, T2, T3> GroupBy(Expression<Func<T1, T2, T3, object>> expression)
         {
-            var buffer = ColumnExpression.Build(expression, new ExpressionParameters(expression, "T1", "T2", "T3"), "[]");
+            var buffer = ColumnExpression.Build(expression, new ExpressionParameters(expression, "T1", "T2", "T3"), "\"\"");
             if (_group == null)
             {
                 _group = buffer;
@@ -1097,7 +1128,7 @@ namespace Kean.Infrastructure.Database
 
         public ISchema<T1, T2, T3> Having(Expression<Func<T1, T2, T3, bool?>> expression)
         {
-            _having = ConditionExpression.Build(expression, new ExpressionParameters(expression, "T1", "T2", "T3"), "@", "[]", ref _param);
+            _having = ConditionExpression.Build(expression, new ExpressionParameters(expression, "T1", "T2", "T3"), ":", "\"\"", ref _param);
             return this;
         }
 

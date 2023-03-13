@@ -15,6 +15,7 @@ namespace Kean.Infrastructure.Database
         private readonly StringBuilder _sql = new(); // Sql 语句
         private Dictionary<string, string> _schema; // 对象名
         private string _prefix; // 参数前缀
+        private string _symbol; // 名称符号
         private Parameters _param; // 参数
         private string _operator; // 操作符（暂存）
         private string _method; // 方法（暂存）
@@ -23,12 +24,13 @@ namespace Kean.Infrastructure.Database
         /// <summary>
         /// 解析表达式
         /// </summary>
-        internal static string Build(Expression expression, Dictionary<string, string> schema, string prefix, ref Parameters param)
+        internal static string Build(Expression expression, Dictionary<string, string> schema, string prefix, string symbol, ref Parameters param)
         {
             var visitor = new ConditionExpression
             {
                 _schema = schema,
                 _prefix = prefix,
+                _symbol = symbol,
                 _param = (param ??= new Parameters())
             };
             visitor.Visit(expression);
@@ -145,11 +147,11 @@ namespace Kean.Infrastructure.Database
             {
                 if (_schema == null)
                 {
-                    _sql.AppendFormat("[{0}]", node.Member.Name);
+                    _sql.AppendFormat("{0}{2}{1}", _symbol[0], _symbol[1], node.Member.Name);
                 }
                 else
                 {
-                    _sql.AppendFormat("[{0}].[{1}]", _schema[pe.Name], node.Member.Name);
+                    _sql.AppendFormat("{0}{2}{1}.{0}{3}{1}", _symbol[0], _symbol[1], _schema[pe.Name], node.Member.Name);
                 }
             }
             else
