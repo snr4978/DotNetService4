@@ -108,25 +108,10 @@ namespace Kean.Infrastructure.Database
                 buffer.Append(" DISTINCT");
             }
             buffer.Append($" {string.Join(',', _columns.Select(c => c.name == c.alias ? c.name : $"{c.name} AS {c.alias}"))}");
-            if (_skip > 0)
-            {
-                buffer.Append(",ROWNUM AS \"ROW_NUM\"");
-            }
             buffer.Append($" FROM {_schema}");
-            if (_where == null)
-            {
-                if (_skip == 0 && _take > 0)
-                {
-                    buffer.Append($" WHERE ROWNUM<={_take}");
-                }
-            }
-            else
+            if (_where != null)
             {
                 buffer.Append($" WHERE {_where}");
-                if (_skip == 0 && _take > 0)
-                {
-                    buffer.Append($" AND ROWNUM<={_take}");
-                }
             }
             if (_group != null)
             {
@@ -140,18 +125,15 @@ namespace Kean.Infrastructure.Database
             {
                 buffer.Append($" ORDER BY {_order}");
             }
-            if (_skip == 0)
+            if (_skip > 0)
             {
-                return buffer.ToString();
+                buffer.Append($" OFFSET {_skip} ROWS");
             }
-            else
+            if (_take > 0)
             {
-                return string.Format("SELECT {0} FROM ({1}) WHERE \"ROW_NUM\" > {2}{3}",
-                    string.Join(',', _columns.Select(c => c.alias)),
-                    buffer,
-                    _skip,
-                    _take == 0 ? string.Empty : $" AND \"ROW_NUM\" <= {_skip + _take}");
+                buffer.Append($" FETCH NEXT {_take} ROWS ONLY");
             }
+            return buffer.ToString();
         }
 
         public Query Query(Expression<Func<T, object>> expression)
@@ -526,25 +508,10 @@ namespace Kean.Infrastructure.Database
                 buffer.Append(" DISTINCT");
             }
             buffer.Append($" {string.Join(',', _columns.Select(c => c.name == c.alias ? c.name : $"{c.name} AS {c.alias}"))}");
-            if (_skip > 0)
-            {
-                buffer.Append(",ROWNUM AS \"ROW_NUM\"");
-            }
             buffer.Append($" FROM {_join}");
-            if (_where == null)
-            {
-                if (_skip == 0 && _take > 0)
-                {
-                    buffer.Append($" WHERE ROWNUM<={_take}");
-                }
-            }
-            else
+            if (_where != null)
             {
                 buffer.Append($" WHERE {_where}");
-                if (_skip == 0 && _take > 0)
-                {
-                    buffer.Append($" AND ROWNUM<={_take}");
-                }
             }
             if (_group != null)
             {
@@ -558,18 +525,15 @@ namespace Kean.Infrastructure.Database
             {
                 buffer.Append($" ORDER BY {_order}");
             }
-            if (_skip == 0)
+            if (_skip > 0)
             {
-                return buffer.ToString();
+                buffer.Append($" OFFSET {_skip} ROWS");
             }
-            else
+            if (_take > 0)
             {
-                return string.Format("SELECT {0} FROM ({1}) WHERE \"ROW_NUM\" > {2}{3}",
-                    string.Join(',', _columns.Select(c => c.alias)),
-                    buffer,
-                    _skip,
-                    _take == 0 ? string.Empty : $" AND \"ROW_NUM\" <= {_skip + _take}");
+                buffer.Append($" FETCH NEXT {_take} ROWS ONLY");
             }
+            return buffer.ToString();
         }
 
         public Query Query(Expression<Func<T1, T2, object>> expression)
@@ -865,25 +829,10 @@ namespace Kean.Infrastructure.Database
                 buffer.Append(" DISTINCT");
             }
             buffer.Append($" {string.Join(',', _columns.Select(c => c.name == c.alias ? c.name : $"{c.name} AS {c.alias}"))}");
-            if (_skip > 0)
-            {
-                buffer.Append(",ROWNUM AS \"ROW_NUM\"");
-            }
             buffer.Append($" FROM {_join}");
-            if (_where == null)
-            {
-                if (_skip == 0 && _take > 0)
-                {
-                    buffer.Append($" WHERE ROWNUM<={_take}");
-                }
-            }
-            else
+            if (_where != null)
             {
                 buffer.Append($" WHERE {_where}");
-                if (_skip == 0 && _take > 0)
-                {
-                    buffer.Append($" AND ROWNUM<={_take}");
-                }
             }
             if (_group != null)
             {
@@ -897,18 +846,15 @@ namespace Kean.Infrastructure.Database
             {
                 buffer.Append($" ORDER BY {_order}");
             }
-            if (_skip == 0)
+            if (_skip > 0)
             {
-                return buffer.ToString();
+                buffer.Append($" OFFSET {_skip} ROWS");
             }
-            else
+            if (_take > 0)
             {
-                return string.Format("SELECT {0} FROM ({1}) WHERE \"ROW_NUM\" > {2}{3}",
-                    string.Join(',', _columns.Select(c => c.alias)),
-                    buffer,
-                    _skip,
-                    _take == 0 ? string.Empty : $" AND \"ROW_NUM\" <= {_skip + _take}");
+                buffer.Append($" FETCH NEXT {_take} ROWS ONLY");
             }
+            return buffer.ToString();
         }
 
         public Query Query(Expression<Func<T1, T2, T3, object>> expression)

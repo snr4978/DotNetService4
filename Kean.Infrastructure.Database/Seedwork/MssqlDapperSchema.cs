@@ -110,7 +110,8 @@ namespace Kean.Infrastructure.Database
             {
                 buffer.Append(" DISTINCT");
             }
-            buffer.Append($" {string.Join(',', _columns.Select(c => c.name == c.alias ? c.name : $"{c.name} AS {c.alias}"))} FROM {_schema}");
+            buffer.Append($" {string.Join(',', _columns.Select(c => c.name == c.alias ? c.name : $"{c.name} AS {c.alias}"))}");
+            buffer.Append($" FROM {_schema}");
             if (_lock != null)
             {
                 buffer.Append($" WITH({_lock})");
@@ -520,7 +521,8 @@ namespace Kean.Infrastructure.Database
             {
                 buffer.Append(" DISTINCT");
             }
-            buffer.Append($" {string.Join(',', _columns.Select(c => c.name == c.alias ? c.name : $"{c.name} AS {c.alias}"))} FROM {_join}");
+            buffer.Append($" {string.Join(',', _columns.Select(c => c.name == c.alias ? c.name : $"{c.name} AS {c.alias}"))}");
+            buffer.Append($" FROM {_join}");
             if (_where != null)
             {
                 buffer.Append($" WHERE {_where}");
@@ -848,7 +850,8 @@ namespace Kean.Infrastructure.Database
             {
                 buffer.Append(" DISTINCT");
             }
-            buffer.Append($" {string.Join(',', _columns.Select(c => c.name == c.alias ? c.name : $"{c.name} AS {c.alias}"))} FROM {_join}");
+            buffer.Append($" {string.Join(',', _columns.Select(c => c.name == c.alias ? c.name : $"{c.name} AS {c.alias}"))}");
+            buffer.Append($" FROM {_join}");
             if (_where != null)
             {
                 buffer.Append($" WHERE {_where}");
