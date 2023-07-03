@@ -143,7 +143,7 @@ namespace Kean.Presentation.Rest.Controllers
             var result = await _identityCommandService.Navigate(token, url, igrone);
             return result switch
             {
-                { Success: true } => StatusCode(200),
+                { Permission: not null } => StatusCode(200, result.Permission),
                 { Failure.ErrorCode: nameof(ErrorCode.Precondition) } => StatusCode(428),
                 { Failure.ErrorCode: nameof(ErrorCode.Expired) } => StatusCode(419),
                 _ => StatusCode(403)

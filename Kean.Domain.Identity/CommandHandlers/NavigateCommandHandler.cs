@@ -52,21 +52,30 @@ namespace Kean.Domain.Identity.CommandHandlers
                     return;
                 }
                 // 权限验证
-                var result = command.Ignore.Contains(command.Url) || await _sessionRepository.HasPermission(session, command.Url);
-                if (!result)
+                var url = command.Url.Split('?', 2)[0];
+                if (command.Ignore.Contains(url))
                 {
-                    // 一次验证失败后，尝试重新同步持久化信息并再进行一次验证
-                    var identity = await _sessionRepository.GetIdentity(session);
-                    if (identity.HasValue)
+                    Output(nameof(command.Permission), Array.Empty<string>());
+                    return;
+                }
+                var permission = await _sessionRepository.HasPermission(session, url);
+                if (permission != null)
+                { 
+                    Output(nameof(command.Permission), permission);
+                    return;
+                }
+                // 一次验证失败后，尝试重新同步持久化信息并再进行一次验证
+                var identity = await _sessionRepository.GetIdentity(session);
+                if (identity.HasValue)
+                {
+                    var permissions = await _userRepository.MenuPermission(identity.Value);
+                    if (permissions.ContainsKey(url))
                     {
-                        result = (await _userRepository.MenuPermission(identity.Value)).Contains(command.Url);
+                        Output(nameof(command.Permission), permissions[url]);
+                        return;
                     }
                 }
-                // 结果
-                if (!result)
-                {
-                    await _commandBus.Notify(nameof(command.Url), "没有 URL 的访问权限", command.Url, null, cancellationToken);
-                }
+                await _commandBus.Notify(nameof(command.Url), "没有 URL 的访问权限", command.Url, null, cancellationToken);
             }
             else
             {

@@ -58,9 +58,9 @@ namespace Kean.Application.Query.Implements
         public async Task<IEnumerable<Menu>> GetMenu(int id)
         {
             var menu = await _database.From<T_SYS_MENU>()
-                .OrderBy(m => m.MENU_ORDER, Order.Ascending)
-                .OrderBy(m => m.MENU_ID, Order.Ascending)
-                .Where(m => m.MENU_FLAG == true)
+                .OrderBy(m => m.MENU_ORDER, Infrastructure.Database.Order.Ascending)
+                .OrderBy(m => m.MENU_ID, Infrastructure.Database.Order.Ascending)
+                .Where(m => m.MENU_TYPE == "Menu" && m.MENU_FLAG == true)
                 .Select();
             if (await _redis.Hash[$"identity:{id}"].Get("tag") == "super")
             {

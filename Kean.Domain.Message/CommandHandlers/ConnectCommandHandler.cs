@@ -1,6 +1,6 @@
 ﻿using Kean.Domain.Message.Commands;
 using Kean.Domain.Message.Repositories;
-using Kean.Domain.Message.SharedServices.Proxies;
+using Kean.Domain.Shared;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,17 +12,17 @@ namespace Kean.Domain.Message.CommandHandlers
     public sealed class ConnectCommandHandler : CommandHandler<ConnectCommand>
     {
         private readonly IMessageRepository _messageRepository; // 消息仓库
-        private readonly IdentityProxy _identityProxy;// 身份域代理
+        private readonly IIdentityService _identityService;// 身份域共享服务
 
         /// <summary>
         /// 依赖注入
         /// </summary>
         public ConnectCommandHandler(
             IMessageRepository messageRepository,
-            IdentityProxy identityProxy)
+            IIdentityService identityService)
         {
             _messageRepository = messageRepository;
-            _identityProxy = identityProxy;
+            _identityService = identityService;
         }
 
         /// <summary>
@@ -32,7 +32,7 @@ namespace Kean.Domain.Message.CommandHandlers
         {
             if (command.ValidationResult.IsValid)
             {
-                var session = await _identityProxy.GetSession(command.Token);
+                var session = await _identityService.GetSession(command.Token);
                 await _messageRepository.RegisterConnection(session, command.Id);
             }
         }

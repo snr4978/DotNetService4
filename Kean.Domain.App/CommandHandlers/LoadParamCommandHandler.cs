@@ -26,7 +26,7 @@ namespace Kean.Domain.App.CommandHandlers
         /// </summary>
         public override async Task Handle(LoadParamCommand command, CancellationToken cancellationToken)
         {
-            await _paramRepository.LoadParam();
+            await _paramRepository.LoadAll();
         }
     }
 }

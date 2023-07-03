@@ -34,7 +34,7 @@ namespace Kean.Infrastructure.Repository
             if (identities.Any())
             {
                 var details = await _redis.Batch(batch => batch.Execute(identities.Select(i => _redis.Hash[$"identity:{i.Key}"].Range()).ToArray()));
-                return details.SelectMany(d => d.Keys).Where(k => k.StartsWith("session")).Select(k => k[8..]);
+                return details.SelectMany(d => d.Keys).Where(k => k.StartsWith("session_")).Select(k => k[8..]);
             }
             else
             {
@@ -124,18 +124,15 @@ namespace Kean.Infrastructure.Repository
         /*
          * 实现 Kean.Domain.Identity.Repositories.ISessionRepository.HasPermission(string key, string url) 方法
          */
-        public async Task<bool> HasPermission(string key, string url)
+        public async Task<IEnumerable<string>> HasPermission(string key, string url)
         {
             var identity = await _redis.Hash[$"session:{key}"].Get("identity");
             var hash = _redis.Hash[$"identity:{identity}"];
-            if (await hash.Get("tag") == "super")
-            {
-                return true;
-            }
-            else
-            {
-                return await hash.Get($"url_{url}") == await hash.Get("url_version");
-            }
+            var version = await hash.Get("url_version");
+            var permission = await hash.Get($"url_{url}");
+            return permission?.StartsWith($"{version}:") == true ?
+                (permission = permission[(permission.IndexOf(':') + 1)..]) == string.Empty ? Array.Empty<string>() : permission.Split(',') :
+                null;
         }
 
         /*
@@ -161,7 +158,7 @@ namespace Kean.Infrastructure.Repository
             if (await _redis.Hash["param"].Get("session_mode") == "Single" && int.TryParse(await _redis.Hash[$"session:{key}"].Get("identity"), out var identity))
             {
                 return (await _redis.Hash[$"identity:{identity}"].Range())
-                    .Where(s => s.Key != $"session:{key}" && s.Key.StartsWith("session:"))
+                    .Where(s => s.Key != $"session_{key}" && s.Key.StartsWith("session_"))
                     .Select(s => s.Key[8..]);
             }
             else

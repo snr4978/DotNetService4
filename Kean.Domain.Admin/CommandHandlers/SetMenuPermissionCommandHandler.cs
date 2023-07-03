@@ -1,4 +1,6 @@
-﻿using Kean.Domain.Admin.Commands;
+﻿using AutoMapper;
+using Kean.Domain.Admin.Commands;
+using Kean.Domain.Admin.Events;
 using Kean.Domain.Admin.Repositories;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,6 +13,7 @@ namespace Kean.Domain.Admin.CommandHandlers
     public sealed class SetMenuPermissionCommandHandler : CommandHandler<SetMenuPermissionCommand>
     {
         private readonly ICommandBus _commandBus; // 命令总线
+        private readonly IMapper _mapper; // 模型映射
         private readonly IRoleRepository _roleRepository; // 角色仓库
 
         /// <summary>
@@ -18,9 +21,11 @@ namespace Kean.Domain.Admin.CommandHandlers
         /// </summary>
         public SetMenuPermissionCommandHandler(
             ICommandBus commandBus,
+            IMapper mapper,
             IRoleRepository roleRepository)
         {
             _commandBus = commandBus;
+            _mapper = mapper;
             _roleRepository = roleRepository;
         }
 
@@ -35,11 +40,10 @@ namespace Kean.Domain.Admin.CommandHandlers
                 {
                     await _commandBus.Notify(nameof(command.Id), "角色不存在", command.Id, nameof(ErrorCode.Gone),
                         cancellationToken: cancellationToken);
+                    return;
                 }
-                else
-                {
-                    await _roleRepository.SetMenuPermission(command.Id, command.Permission);
-                }
+                await _roleRepository.SetMenuPermission(command.Id, command.Permission);
+                await _commandBus.Trigger(_mapper.Map<SetMenuPermissionSuccessEvent>(command), cancellationToken);
             }
             else
             {

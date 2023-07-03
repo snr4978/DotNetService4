@@ -14,6 +14,8 @@ namespace Kean.Domain.App
         public DependencyInjection(IServiceCollection services)
         {
             services.AddDomain();
+
+            services.AddScoped<Shared.IAppService, SharedService>();
         }
     }
 }

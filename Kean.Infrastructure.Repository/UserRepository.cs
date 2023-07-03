@@ -206,33 +206,41 @@ namespace Kean.Infrastructure.Repository
         /*
          * 实现 Kean.Domain.Identity.Repositories.IUserRepository.MenuPermission(int id) 方法
          */
-        public async Task<IEnumerable<string>> MenuPermission(int id)
+        public async Task<IDictionary<string, IEnumerable<string>>> MenuPermission(int id)
         {
-            if (await Super(s => s.USER_ID == id) != null)
+            var menu = await _database.From<T_SYS_MENU>()
+                .Where(m => m.MENU_FLAG == true)
+                .OrderBy(m => m.MENU_ID, Order.Ascending)
+                .Select();
+            if (await Super(s => s.USER_ID == id) == null)
             {
-                return null;
+                menu = menu.IntersectBy(
+                    (await _database.From<T_SYS_ROLE_MENU, T_SYS_USER_ROLE>()
+                        .Join(Join.Inner, (rm, ur) => rm.ROLE_ID == ur.ROLE_ID && ur.USER_ID == id)
+                        .Select((rm, _) => new { rm.MENU_ID }))
+                        .Select(r => r.MENU_ID),
+                    m => m.MENU_ID);
             }
-            var menu = await _database.From<T_SYS_MENU, T_SYS_ROLE_MENU, T_SYS_USER_ROLE>()
-                .Join<T_SYS_MENU, T_SYS_ROLE_MENU>(Join.Inner, (m, rm) => m.MENU_ID == rm.MENU_ID && m.MENU_FLAG == true && m.MENU_URL != null)
-                .Join<T_SYS_ROLE_MENU, T_SYS_USER_ROLE>(Join.Inner, (rm, ur) => rm.ROLE_ID == ur.ROLE_ID && ur.USER_ID == id)
-                .Distinct()
-                .Select((m, _, _) => new { m.MENU_URL });
-            var identity = _redis.Hash[$"identity:{id}"];
-            var version = await identity.Get("url_version");
-            if (version == null)
+            var result = menu.Where(m => m.MENU_TYPE == "Menu" && m.MENU_PARAM != null)
+                .ToDictionary(m => m.MENU_PARAM = HttpUtility.UrlEncode(m.MENU_PARAM), _ => new List<string>());
+            if (result.Any())
             {
-                await identity.Set("url_version", version = "0");
+                var map = menu.ToDictionary(m => m.MENU_ID, m => m);
+                foreach (var item in menu.Where(m => m.MENU_TYPE == "UI"))
+                {
+                    if (result.ContainsKey(map[item.MENU_PARENT_ID].MENU_PARAM))
+                    {
+                        result[map[item.MENU_PARENT_ID].MENU_PARAM].Add(item.MENU_PARAM);
+                    }
+                }
+                var identity = _redis.Hash[$"identity:{id}"];
+                var version = (int.TryParse(await identity.Get("url_version"), out var i) ? ++i : 0).ToString();
+                await identity.Set("url_version", version);
+                await _redis.Batch(batch => batch.Execute(result
+                    .Select(i => identity.Set($"url_{i.Key}", $"{version}:{string.Join(',', i.Value)}"))
+                    .ToArray()));
             }
-            var urls = menu.Select(m =>
-            {
-                string url = HttpUtility.UrlEncode(m.MENU_URL);
-                return url;
-            });
-            if (urls.Any())
-            {
-                await _redis.Batch(batch => batch.Execute(urls.Select(u => identity.Set($"url_{u}", version)).ToArray()));
-            }
-            return urls;
+            return result.ToDictionary(i => i.Key, i => i.Value as IEnumerable<string>);
         }
 
         #endregion

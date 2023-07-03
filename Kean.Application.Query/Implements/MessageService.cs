@@ -43,8 +43,9 @@ namespace Kean.Application.Query.Implements
                     return 0;
                 }
             }
-            var schema = _database.From<T_SYS_USER_MESSAGE>($"T_SYS_USER_MESSAGE_{userId}");
-            if (!string.IsNullOrWhiteSpace(subject))
+            var schema = _database.From<T_SYS_USER_MESSAGE>()
+                .Where(m => m.MESSAGE_TARGET == userId);
+            if (subject != null)
             {
                 schema = schema.Where(m => m.MESSAGE_SUBJECT.Contains(subject));
             }
@@ -64,7 +65,7 @@ namespace Kean.Application.Query.Implements
             {
                 schema = schema.Where(m => m.MESSAGE_FLAG == flag.Value);
             }
-            return (await schema.Single(m => new { Count = Function.Count(m.MESSAGE_ID) })).Count;
+            return (int)(await schema.Single(m => new { Count = Function.Count(m.MESSAGE_ID) })).Count;
         }
 
         /*
@@ -72,14 +73,15 @@ namespace Kean.Application.Query.Implements
          */
         public async Task<IEnumerable<Message>> GetList(int userId, string subject, string source, DateTime? start, DateTime? end, bool? flag, int? offset, int? limit)
         {
-            var schema = _database.From<T_SYS_USER_MESSAGE, T_SYS_USER>(name1: $"T_SYS_USER_MESSAGE_{userId}")
+            var schema = _database.From<T_SYS_USER_MESSAGE, T_SYS_USER>()
                 .Join(Join.Left, (m, u) => m.MESSAGE_SOURCE == u.USER_ID)
-                .OrderBy((m, u) => m.MESSAGE_TIME, Order.Descending);
-            if (!string.IsNullOrWhiteSpace(subject))
+                .Where((m, u) => m.MESSAGE_TARGET == userId)
+                .OrderBy((m, u) => m.MESSAGE_TIME, Infrastructure.Database.Order.Descending);
+            if (subject != null)
             {
                 schema = schema.Where((m, _) => m.MESSAGE_SUBJECT.Contains(subject));
             }
-            if (!string.IsNullOrWhiteSpace(source))
+            if (source != null)
             {
                 schema = schema.Where((_, u) => u.USER_NAME == source);
             }
@@ -121,9 +123,9 @@ namespace Kean.Application.Query.Implements
          */
         public async Task<Message> GetItem(int userId, int messageId)
         {
-            return _mapper.Map<Message>(await _database.From<T_SYS_USER_MESSAGE, T_SYS_USER>(name1: $"T_SYS_USER_MESSAGE_{userId}")
+            return _mapper.Map<Message>(await _database.From<T_SYS_USER_MESSAGE, T_SYS_USER>()
                 .Join(Join.Left, (m, u) => m.MESSAGE_SOURCE == u.USER_ID)
-                .Where((m, u) => m.MESSAGE_ID == messageId)
+                .Where((m, u) => m.MESSAGE_ID == messageId && m.MESSAGE_TARGET == userId)
                 .Single((m, u) => new
                 {
                     m.MESSAGE_ID,

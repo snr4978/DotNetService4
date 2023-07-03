@@ -1,8 +1,9 @@
 ﻿using AutoMapper;
 using Kean.Domain.Admin.Commands;
+using Kean.Domain.Admin.Events;
 using Kean.Domain.Admin.Models;
 using Kean.Domain.Admin.Repositories;
-using Kean.Domain.Admin.SharedServices.Proxies;
+using Kean.Domain.Shared;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -16,7 +17,7 @@ namespace Kean.Domain.Admin.CommandHandlers
         private readonly ICommandBus _commandBus; // 命令总线
         private readonly IMapper _mapper; // 模型映射
         private readonly IUserRepository _userRepository; // 用户仓库
-        private readonly IdentityProxy _identityProxy;// 身份域代理
+        private readonly IIdentityService _identityService;// 身份域共享服务
 
         /// <summary>
         /// 依赖注入
@@ -25,12 +26,12 @@ namespace Kean.Domain.Admin.CommandHandlers
             ICommandBus commandBus,
             IMapper mapper,
             IUserRepository userRepository,
-            IdentityProxy identityProxy)
+            IIdentityService identityService)
         {
             _commandBus = commandBus;
             _mapper = mapper;
             _userRepository = userRepository;
-            _identityProxy = identityProxy;
+            _identityService = identityService;
         }
 
         /// <summary>
@@ -52,7 +53,8 @@ namespace Kean.Domain.Admin.CommandHandlers
                         cancellationToken: cancellationToken);
                     return;
                 }
-                Output(nameof(command.Id), await _userRepository.Create(_mapper.Map<User>(command), s => _identityProxy.EncodePassword(s)));
+                Output(nameof(command.Id), await _userRepository.Create(_mapper.Map<User>(command), s => _identityService.EncodePassword(s)));
+                await _commandBus.Trigger(_mapper.Map<CreateUserSuccessEvent>(command), cancellationToken);
             }
             else
             {

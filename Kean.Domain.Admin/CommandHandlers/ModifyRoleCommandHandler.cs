@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Kean.Domain.Admin.Commands;
+using Kean.Domain.Admin.Events;
 using Kean.Domain.Admin.Models;
 using Kean.Domain.Admin.Repositories;
 using System.Threading;
@@ -40,19 +41,16 @@ namespace Kean.Domain.Admin.CommandHandlers
                 {
                     await _commandBus.Notify(nameof(command.Id), "角色不存在", command.Id, nameof(ErrorCode.Gone),
                         cancellationToken: cancellationToken);
+                    return;
                 }
-                else
+                if (await _roleRepository.IsExist(command.Name, command.Id))
                 {
-                    if (await _roleRepository.IsExist(command.Name, command.Id))
-                    {
-                        await _commandBus.Notify(nameof(command.Name), "角色名重复", command.Name, nameof(ErrorCode.Conflict),
-                            cancellationToken: cancellationToken);
-                    }
-                    else
-                    {
-                        await _roleRepository.Modify(_mapper.Map<Role>(command));
-                    }
+                    await _commandBus.Notify(nameof(command.Name), "角色名重复", command.Name, nameof(ErrorCode.Conflict),
+                        cancellationToken: cancellationToken);
+                    return;
                 }
+                await _roleRepository.Modify(_mapper.Map<Role>(command));
+                await _commandBus.Trigger(_mapper.Map<ModifyRoleSuccessEvent>(command), cancellationToken);
             }
             else
             {

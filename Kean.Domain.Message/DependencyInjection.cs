@@ -16,8 +16,6 @@ namespace Kean.Domain.Message
             services.AddDomain();
 
             services.AddAutoMapper(typeof(AutoMapper));
-
-            services.AddTransient<SharedServices.Proxies.IdentityProxy>();
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using System.Collections.Generic;
 
 namespace Kean.Domain.Identity.Commands
 {
@@ -30,5 +31,11 @@ namespace Kean.Domain.Identity.Commands
             RuleFor(r => r.Token).NotEmpty().WithMessage("令牌不允许空");
             RuleFor(r => r.Url).NotEmpty().WithMessage("URL 不允许空");
         }
+
+        /// <summary>
+        /// 权限信息
+        /// </summary>
+        [Output]
+        public IEnumerable<string> Permission { get; private set; }
     }
 }

@@ -52,5 +52,18 @@ namespace Kean.Presentation.Rest
                 })
                 .Services;
         }
+
+        /// <summary>
+        /// 向服务描述中追加后台任务配置
+        /// </summary>
+        /// <param name="services">服务描述符</param>
+        /// <param name="configure">配置选项</param>
+        /// <returns>服务描述符</returns>
+        public static IServiceCollection AddBackground(this IServiceCollection services, Action<BackgroundServiceOptions> configure)
+        {
+            var options = new BackgroundServiceOptions(services);
+            configure.Invoke(options);
+            return services;
+        }
     }
 }

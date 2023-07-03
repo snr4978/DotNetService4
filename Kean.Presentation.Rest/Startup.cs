@@ -1,10 +1,10 @@
 using Kean.Infrastructure.Hangfire;
-using Kean.Infrastructure.Orleans;
 using Kean.Infrastructure.SignalR;
 using Kean.Infrastructure.Soap;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 
 namespace Kean.Presentation.Rest
 {
@@ -58,16 +58,6 @@ namespace Kean.Presentation.Rest
                         }
                     });
                 })
-                //.AddOrleans(options =>
-                //{
-                //    options.SiloPort = int.Parse(_configuration["Orleans:SiloPort"]);
-                //    options.GatewayPort = int.Parse(_configuration["Orleans:GatewayPort"]);
-                //    options.ClusterId = _configuration["Orleans:ClusterId"];
-                //    options.ServiceId = _configuration["Orleans:ServiceId"];
-                //    options.RedisClustering.ConnectionString = _configuration["Orleans:RedisClustering:ConnectionString"];
-                //    options.RedisClustering.Database = int.Parse(_configuration["Orleans:RedisClustering:Database"]);
-                //    options.ConfigureServices(services => DependencyInject(services));
-                //})
                 //.AddHangfire(options =>
                 //{
                 //    options.RedisStorage.ConnectionString = _configuration["Hangfire:RedisStorage:ConnectionString"];
@@ -105,7 +95,6 @@ namespace Kean.Presentation.Rest
         /// ≈‰÷√ HTTP «Î«Ûπ‹µ¿
         /// </summary>
         public void Configure(IApplicationBuilder app) => app
-            //.UseOrleans()
             //.UseHangfire()
             .UseSwagger()
             .UseRouting()

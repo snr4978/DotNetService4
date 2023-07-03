@@ -1,6 +1,8 @@
-﻿using Kean.Domain.Admin.Commands;
+﻿using AutoMapper;
+using Kean.Domain.Admin.Commands;
+using Kean.Domain.Admin.Events;
 using Kean.Domain.Admin.Repositories;
-using Kean.Domain.Admin.SharedServices.Proxies;
+using Kean.Domain.Shared;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,20 +14,23 @@ namespace Kean.Domain.Admin.CommandHandlers
     public sealed class ResetPasswordCommandHandler : CommandHandler<ResetPasswordCommand>
     {
         private readonly ICommandBus _commandBus; // 命令总线
+        private readonly IMapper _mapper; // 模型映射
         private readonly IUserRepository _userRepository; // 用户仓库
-        private readonly IdentityProxy _identityProxy;// 身份域代理
+        private readonly IIdentityService _identityService;// 身份域共享服务
 
         /// <summary>
         /// 依赖注入
         /// </summary>
         public ResetPasswordCommandHandler(
             ICommandBus commandBus,
+            IMapper mapper,
             IUserRepository userRepository,
-            IdentityProxy identityProxy)
+            IIdentityService identityService)
         {
             _commandBus = commandBus;
+            _mapper = mapper;
             _userRepository = userRepository;
-            _identityProxy = identityProxy;
+            _identityService = identityService;
         }
 
         /// <summary>
@@ -39,11 +44,10 @@ namespace Kean.Domain.Admin.CommandHandlers
                 {
                     await _commandBus.Notify(nameof(command.Id), "用户不存在", command.Id, nameof(ErrorCode.Gone),
                         cancellationToken: cancellationToken);
+                    return;
                 }
-                else
-                {
-                    await _userRepository.ResetPassword(command.Id, s => _identityProxy.EncodePassword(s));
-                }
+                await _userRepository.ResetPassword(command.Id, s => _identityService.EncodePassword(s));
+                await _commandBus.Trigger(_mapper.Map<ResetPasswordSuccessEvent>(command), cancellationToken);
             }
             else
             {

@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+		<AssemblyName>Kean.Infrastructure.Network</AssemblyName>
+		<RootNamespace>Kean.Infrastructure.Network</RootNamespace>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Wms.Core.Infrastructure.Utilities\Wms.Core.Infrastructure.Utilities.csproj" />
+	</ItemGroup>
+
+</Project>

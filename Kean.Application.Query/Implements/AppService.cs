@@ -36,5 +36,13 @@ namespace Kean.Application.Query.Implements
             var entity = cache == null ? null : JsonHelper.Deserialize<T_SYS_SECURITY>(cache);
             return _mapper.Map<Blacklist>(entity);
         }
+
+        /*
+         * 实现 Kean.Application.Query.Interfaces.IAppService.GetParam(string key) 方法
+         */
+        public async Task<string> GetParam(string key)
+        {
+            return await _redis.Hash["param"].Get(key);
+        }
     }
 }

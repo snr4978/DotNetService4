@@ -33,11 +33,12 @@ namespace Kean.Infrastructure.Repository
          */
         public Task<bool> SendMessage(string subject, string content, int source, int target, DateTime time)
         {
-            return _database.From<T_SYS_USER_MESSAGE>($"T_SYS_USER_MESSAGE_{target}")
+            return _database.From<T_SYS_USER_MESSAGE>()
                 .Add(new()
                 {
                     MESSAGE_TIME = time,
                     MESSAGE_SOURCE = source,
+                    MESSAGE_TARGET = target,
                     MESSAGE_SUBJECT = subject,
                     MESSAGE_CONTENT = content,
                     MESSAGE_FLAG = false,
@@ -52,8 +53,8 @@ namespace Kean.Infrastructure.Repository
          */
         public Task MarkMessage(int userId, int messageId, bool flag)
         {
-            return _database.From<T_SYS_USER_MESSAGE>($"T_SYS_USER_MESSAGE_{userId}")
-                .Where(m => m.MESSAGE_ID == messageId)
+            return _database.From<T_SYS_USER_MESSAGE>()
+                .Where(m => m.MESSAGE_ID == messageId && m.MESSAGE_TARGET == userId)
                 .Update(new
                 {
                     MESSAGE_FLAG = flag,
@@ -66,8 +67,8 @@ namespace Kean.Infrastructure.Repository
          */
         public Task DeleteMessage(int userId, int messageId)
         {
-            return _database.From<T_SYS_USER_MESSAGE>($"T_SYS_USER_MESSAGE_{userId}")
-                .Where(m => m.MESSAGE_ID == messageId)
+            return _database.From<T_SYS_USER_MESSAGE>()
+                .Where(m => m.MESSAGE_ID == messageId && m.MESSAGE_TARGET == userId)
                 .Delete();
         }
 
@@ -77,7 +78,7 @@ namespace Kean.Infrastructure.Repository
         public async Task<IEnumerable<string>> GetConnections(int userId)
         {
             var sessions = (await _redis.Hash[$"identity:{userId}"].Range())
-                .Where(i => i.Key.StartsWith("session:"));
+                .Where(i => i.Key.StartsWith("session_"));
             return sessions.Any() ?
                 await _redis.Batch(batch => batch.Execute(sessions.Select(s => batch.Hash[$"session:{s.Key[8..]}"].Get("message")).ToArray())) :
                 Array.Empty<string>();

@@ -3,6 +3,7 @@ using Kean.Application.Command.Interfaces;
 using Kean.Application.Command.ViewModels;
 using Kean.Domain;
 using Kean.Domain.Identity.Commands;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -91,16 +92,17 @@ namespace Kean.Application.Command.Implements
         /*
          * 实现 Kean.Application.Command.Interfaces.IIdentityService.Navigate(string token, string url) 方法
          */
-        public async Task<(bool Success, Failure Failure)> Navigate(string token, string url, params string[] ignore)
+        public async Task<(IEnumerable<string> Permission, Failure Failure)> Navigate(string token, string url, params string[] ignore)
         {
-            await _bus.Execute(new NavigateCommand
+            var command = new NavigateCommand
             {
                 Token = token,
                 Url = url,
                 Ignore = ignore
-            });
+            };
+            await _bus.Execute(command);
             var failure = _notifications.FirstOrDefault();
-            return (failure == null, failure);
+            return (command.Permission, failure);
         }
 
         /*

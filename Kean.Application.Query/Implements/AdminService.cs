@@ -35,12 +35,9 @@ namespace Kean.Application.Query.Implements
          */
         public async Task<int> GetRoleCount(string name)
         {
-            var schema = _database.From<T_SYS_ROLE>();
-            if (!string.IsNullOrWhiteSpace(name))
-            {
-                schema = schema.Where(r => r.ROLE_NAME.Contains(name));
-            }
-            return (await schema.Single(r => new { Count = Function.Count(r.ROLE_ID) })).Count;
+            return (int)(await GetRoleSchema(name)
+                .Single(r => new { Count = Function.Count(r.ROLE_ID) }))
+                .Count;
         }
 
         /*
@@ -48,30 +45,23 @@ namespace Kean.Application.Query.Implements
          */
         public async Task<IEnumerable<Role>> GetRoleList(string name, string sort, int? offset, int? limit)
         {
+            return _mapper.Map<IEnumerable<Role>>(await GetRoleSchema(name)
+                .Sort<T_SYS_ROLE, Role>(sort, _mapper)
+                .Page(offset, limit)
+                .Select());
+        }
+
+        /*
+         * 组织 GetRole 相关方法的条件
+         */
+        private ISchema<T_SYS_ROLE> GetRoleSchema(string name)
+        {
             var schema = _database.From<T_SYS_ROLE>();
-            if (!string.IsNullOrWhiteSpace(name))
+            if (name != null)
             {
                 schema = schema.Where(r => r.ROLE_NAME.Contains(name));
             }
-            if (!string.IsNullOrEmpty(sort))
-            {
-                var order = sort[0] == '~' ? Order.Descending : Order.Ascending;
-                var column = order == Order.Descending ? sort[1..] : sort;
-                var expression = _mapper.GetPropertyMapExpression<T_SYS_ROLE, Role>(column);
-                if (expression != null)
-                {
-                    schema = schema.OrderBy(expression, order);
-                }
-            }
-            if (offset.HasValue)
-            {
-                schema = schema.Skip(offset.Value);
-            }
-            if (limit.HasValue)
-            {
-                schema = schema.Take(limit.Value);
-            }
-            return _mapper.Map<IEnumerable<Role>>(await schema.Select());
+            return schema;
         }
 
         /*
@@ -80,8 +70,8 @@ namespace Kean.Application.Query.Implements
         public async Task<(Tree<Menu> Menu, IEnumerable<int> Permission)> GetRoleMenuPermission(int id)
         {
             var menu = new Tree<Menu>(_mapper.Map<IEnumerable<Menu>>(await _database.From<T_SYS_MENU>()
-                .OrderBy(m => m.MENU_ORDER, Order.Ascending)
-                .OrderBy(m => m.MENU_ID, Order.Ascending)
+                .OrderBy(m => m.MENU_ORDER, Infrastructure.Database.Order.Ascending)
+                .OrderBy(m => m.MENU_ID, Infrastructure.Database.Order.Ascending)
                 .Where(m => m.MENU_FLAG == true)
                 .Select()), "Id", "Parent");
             var permission = (await _database.From<T_SYS_ROLE_MENU>()
@@ -100,21 +90,9 @@ namespace Kean.Application.Query.Implements
          */
         public async Task<int> GetUserCount(string name, string account, int? role)
         {
-            var schema = _database.From<T_SYS_USER>().Where(u => u.USER_ID > 0);
-            if (role.HasValue)
-            {
-                var query = _database.From<T_SYS_USER_ROLE>().Where(r => r.ROLE_ID == role.Value).Query(r => r.USER_ID);
-                schema = schema.Where(u => query.Contains(u.USER_ID));
-            }
-            if (!string.IsNullOrWhiteSpace(name))
-            {
-                schema = schema.Where(u => u.USER_NAME.Contains(name));
-            }
-            if (!string.IsNullOrWhiteSpace(account))
-            {
-                schema = schema.Where(u => u.USER_ACCOUNT.Contains(account));
-            }
-            return (await schema.Single(u => new { Count = Function.Count(u.USER_ID) })).Count;
+            return (int)(await GetUserSchema(name, account, role)
+                .Single(u => new { Count = Function.Count(u.USER_ID) }))
+                .Count;
         }
 
         /*
@@ -122,38 +100,9 @@ namespace Kean.Application.Query.Implements
          */
         public async Task<IEnumerable<User>> GetUserList(string name, string account, int? role, string sort, int? offset, int? limit)
         {
-            var schema = _database.From<T_SYS_USER>().Where(u => u.USER_ID > 0);
-            if (role.HasValue)
-            {
-                var query = _database.From<T_SYS_USER_ROLE>().Where(r => r.ROLE_ID == role.Value).Query(r => r.USER_ID);
-                schema = schema.Where(u => query.Contains(u.USER_ID));
-            }
-            if (!string.IsNullOrWhiteSpace(name))
-            {
-                schema = schema.Where(u => u.USER_NAME.Contains(name));
-            }
-            if (!string.IsNullOrWhiteSpace(account))
-            {
-                schema = schema.Where(u => u.USER_ACCOUNT.Contains(account));
-            }
-            if (!string.IsNullOrEmpty(sort))
-            {
-                var order = sort[0] == '~' ? Order.Descending : Order.Ascending;
-                var column = order == Order.Descending ? sort[1..] : sort;
-                var expression = _mapper.GetPropertyMapExpression<T_SYS_USER, User>(column);
-                if (expression != null)
-                {
-                    schema = schema.OrderBy(expression, order);
-                }
-            }
-            if (offset.HasValue)
-            {
-                schema = schema.Skip(offset.Value);
-            }
-            if (limit.HasValue)
-            {
-                schema = schema.Take(limit.Value);
-            }
+            var schema = GetUserSchema(name, account, role)
+                .Sort<T_SYS_USER, User>(sort, _mapper)
+                .Page(offset, limit);
             return (await schema.Select())
                 .Select(async u =>
                 {
@@ -163,6 +112,28 @@ namespace Kean.Application.Query.Implements
                     return user;
                 })
                 .Select(t => t.Result);
+        }
+
+        /*
+         * 组织 GetUser 相关方法的条件
+         */
+        private ISchema<T_SYS_USER> GetUserSchema(string name, string account, int? role)
+        {
+            var schema = _database.From<T_SYS_USER>().Where(u => u.USER_ID > 0);
+            if (role.HasValue)
+            {
+                var query = _database.From<T_SYS_USER_ROLE>().Where(r => r.ROLE_ID == role.Value).Query(r => r.USER_ID);
+                schema = schema.Where(u => query.Contains(u.USER_ID));
+            }
+            if (name != null)
+            {
+                schema = schema.Where(u => u.USER_NAME.Contains(name));
+            }
+            if (account != null)
+            {
+                schema = schema.Where(u => u.USER_ACCOUNT.Contains(account));
+            }
+            return schema;
         }
     }
 }

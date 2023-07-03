@@ -17,11 +17,17 @@ namespace Kean.Domain.Admin
         {
             CreateMap<CreateRoleCommand, Role>();
             CreateMap<ModifyRoleCommand, Role>();
+            CreateMap<CreateRoleCommand, CreateRoleSuccessEvent>();
+            CreateMap<ModifyRoleCommand, ModifyRoleSuccessEvent>();
             CreateMap<DeleteRoleCommand, DeleteRoleSuccessEvent>();
+            CreateMap<SetMenuPermissionCommand, SetMenuPermissionSuccessEvent>();
 
             CreateMap<CreateUserCommand, User>();
             CreateMap<ModifyUserCommand, User>();
+            CreateMap<CreateUserCommand, CreateUserSuccessEvent>();
+            CreateMap<ModifyUserCommand, ModifyUserSuccessEvent>();
             CreateMap<DeleteUserCommand, DeleteUserSuccessEvent>();
+            CreateMap<ResetPasswordCommand, ResetPasswordSuccessEvent>();
         }
     }
 }

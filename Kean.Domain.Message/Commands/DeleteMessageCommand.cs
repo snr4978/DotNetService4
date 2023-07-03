@@ -23,7 +23,6 @@ namespace Kean.Domain.Message.Commands
         /// </summary>
         protected override void Validation()
         {
-            RuleFor(r => r.UserId).NotEmpty().WithMessage("用户 ID 不合法");
             RuleFor(r => r.MessageId).NotEmpty().WithMessage("消息 ID 不合法");
         }
     }

@@ -20,11 +20,10 @@ namespace Kean.Infrastructure.Soap
             services.AddSoapCore();
             var options = new SoapOptions
             {
-                Clients = new(services),
-                Servers = new(services)
+                Services = new(services)
             };
             setupAction.Invoke(options);
-            return services.AddTransient(_ => options.Servers);
+            return services.AddTransient(_ => options.Services);
         }
     }
 }

@@ -59,8 +59,8 @@ namespace Kean.Domain.Identity.Repositories
         /// </summary>
         /// <param name="key">会话索引</param>
         /// <param name="url">URL</param>
-        /// <returns>如果有权限，为 true；否则为 false</returns>
-        Task<bool> HasPermission(string key, string url);
+        /// <returns>如果有权限，返回 UI 明细；否则为 null</returns>
+        Task<IEnumerable<string>> HasPermission(string key, string url);
 
         /// <summary>
         /// 会话身份信息

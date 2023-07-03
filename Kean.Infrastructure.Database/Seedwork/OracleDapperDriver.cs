@@ -1,4 +1,7 @@
-﻿namespace Kean.Infrastructure.Database
+﻿using Dapper;
+using System.Data;
+
+namespace Kean.Infrastructure.Database
 {
     /// <summary>
     /// 基于 Dapper 的 Oracle 数据库驱动
@@ -11,7 +14,11 @@
         /// 构造函数
         /// </summary>
         /// <param name="connectionString">数据库连接字符串</param>
-        public OracleDapperDriver(string connectionString) => _connectionString = connectionString;
+        public OracleDapperDriver(string connectionString)
+        {
+            SqlMapper.AddTypeMap(typeof(bool), DbType.Byte);
+            _connectionString = connectionString;
+        }
 
         /// <summary>
         /// 创建数据库连接

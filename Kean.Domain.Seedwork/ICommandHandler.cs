@@ -8,7 +8,7 @@ namespace Kean.Domain
     /// 表示命令处理程序
     /// </summary>
     /// <typeparam name="T">命令模型</typeparam>
-    internal interface ICommandHandler<T> : IRequestHandler<T, Unit> where T : class, ICommand
+    internal interface ICommandHandler<T> : IRequestHandler<T> where T : class, ICommand
     {
         /// <summary>
 		/// 处理命令

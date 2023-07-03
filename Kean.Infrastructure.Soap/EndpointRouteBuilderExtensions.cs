@@ -15,7 +15,7 @@ namespace Kean.Infrastructure.Soap
         /// <returns>终节点路由</returns>
         public static IEndpointRouteBuilder MapSoaps(this IEndpointRouteBuilder endpoints)
         {
-            foreach (var item in endpoints.ServiceProvider.GetService<ServerCollection>())
+            foreach (var item in endpoints.ServiceProvider.GetService<ServiceCollection>())
             {
                 item.Map(endpoints);
             }

@@ -1,4 +1,5 @@
 ﻿using Kean.Application.Command.ViewModels;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Kean.Application.Command.Interfaces
@@ -51,8 +52,8 @@ namespace Kean.Application.Command.Interfaces
         /// <param name="token">令牌</param>
         /// <param name="url">URL</param>
         /// <param name="ignore">忽略项</param>
-        /// <returns>操作结果及失败信息</returns>
-        Task<(bool Success, Failure Failure)> Navigate(string token, string url, params string[] ignore);
+        /// <returns>权限及失败信息</returns>
+        Task<(IEnumerable<string> Permission, Failure Failure)> Navigate(string token, string url, params string[] ignore);
 
         /// <summary>
         /// 初始化密码

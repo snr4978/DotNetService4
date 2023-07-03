@@ -20,7 +20,8 @@ namespace Kean.Domain
         public static IServiceCollection AddDomain(this IServiceCollection services)
         {
             // MediatR 注册当前程序集
-            services.AddMediatR(Assembly.GetCallingAssembly());
+            var assembly = Assembly.GetCallingAssembly();
+            services.AddMediatR(configuration => configuration.RegisterServicesFromAssembly(assembly));
             // 提取事件处理程序
             var serviceType = typeof(INotificationHandler<MediatR.INotification>);
             var notificationHandler = new Stack<ServiceDescriptor>();

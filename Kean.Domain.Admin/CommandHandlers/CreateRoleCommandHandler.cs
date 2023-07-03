@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Kean.Domain.Admin.Commands;
+using Kean.Domain.Admin.Events;
 using Kean.Domain.Admin.Models;
 using Kean.Domain.Admin.Repositories;
 using System.Threading;
@@ -40,11 +41,10 @@ namespace Kean.Domain.Admin.CommandHandlers
                 {
                     await _commandBus.Notify(nameof(command.Name), "角色名重复", command.Name, nameof(ErrorCode.Conflict),
                         cancellationToken: cancellationToken);
+                    return;
                 }
-                else
-                {
-                    Output(nameof(command.Id), await _roleRepository.Create(_mapper.Map<Role>(command)));
-                }
+                Output(nameof(command.Id), await _roleRepository.Create(_mapper.Map<Role>(command)));
+                await _commandBus.Trigger(_mapper.Map<CreateRoleSuccessEvent>(command), cancellationToken);
             }
             else
             {

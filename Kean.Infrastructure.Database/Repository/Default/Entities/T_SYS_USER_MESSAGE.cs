@@ -21,6 +21,11 @@ namespace Kean.Infrastructure.Database.Repository.Default.Entities
         public int MESSAGE_SOURCE { get; set; }
 
         /// <summary>
+        /// 消息目标
+        /// </summary>
+        public int MESSAGE_TARGET { get; set; }
+
+        /// <summary>
         /// 主题
         /// </summary>
         public string MESSAGE_SUBJECT { get; set; }

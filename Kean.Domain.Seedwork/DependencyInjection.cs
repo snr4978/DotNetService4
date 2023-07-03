@@ -1,5 +1,4 @@
-﻿using MediatR;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
 namespace Kean.Domain.Seedwork
@@ -15,9 +14,9 @@ namespace Kean.Domain.Seedwork
         /// <param name="services">服务描述符</param>
         public DependencyInjection(IServiceCollection services)
         {
-            services.AddMediatR(Assembly.GetExecutingAssembly()); // 注册 MediatR
+            var assembly = Assembly.GetExecutingAssembly();
+            services.AddMediatR(configuration => configuration.RegisterServicesFromAssembly(assembly)); // 注册 MediatR
             services.AddScoped<ICommandBus, CommandBus>(); // 命令总线注入
-            services.AddScoped<IDomain, Domain>(); // 共享服务注入
             services.AddScoped<INotification, Notification>(); // 通知注入
         }
     }

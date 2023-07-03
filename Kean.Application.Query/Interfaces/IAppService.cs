@@ -14,5 +14,12 @@ namespace Kean.Application.Query.Interfaces
         /// <param name="address">地址</param>
         /// <returns>查询结果</returns>
         Task<Blacklist> GetBlacklist(string address);
+
+        /// <summary>
+        /// 获取系统参数
+        /// </summary>
+        /// <param name="key">键</param>
+        /// <returns>值</returns>
+        Task<string> GetParam(string key);
     }
 }

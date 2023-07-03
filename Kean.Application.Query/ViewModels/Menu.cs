@@ -16,14 +16,19 @@
         public int Parent { get; set; }
 
         /// <summary>
-        /// 标头
+        /// 类型
         /// </summary>
-        public string Header { get; set; }
+        public string Type { get; set; }
 
         /// <summary>
-        /// 路径
+        /// 名称
         /// </summary>
-        public string Url { get; set; }
+        public string Name { get; set; }
+
+        /// <summary>
+        /// 参数
+        /// </summary>
+        public string Parameter { get; set; }
 
         /// <summary>
         /// 图标

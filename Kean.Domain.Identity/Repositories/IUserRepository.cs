@@ -61,7 +61,7 @@ namespace Kean.Domain.Identity.Repositories
         /// 菜单权限
         /// </summary>
         /// <param name="id">身份标识</param>
-        /// <returns>权限内的菜单 URL</returns>
-        Task<IEnumerable<string>> MenuPermission(int id);
+        /// <returns>权限内的菜单 URL 及 UI</returns>
+        Task<IDictionary<string, IEnumerable<string>>> MenuPermission(int id);
     }
 }

@@ -39,6 +39,7 @@ namespace Kean.Infrastructure.SignalR
             where THub : Hub, TService
         {
             _services.AddScoped<TService, THub>();
+            _services.AddScoped<THub>();
             _list.Add(new HubMapper<THub>());
         }
 

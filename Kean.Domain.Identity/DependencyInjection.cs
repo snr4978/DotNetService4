@@ -17,8 +17,7 @@ namespace Kean.Domain.Identity
 
             services.AddAutoMapper(typeof(AutoMapper));
 
-            services.AddTransient<SharedServices.EncodePassword>();
-            services.AddTransient<SharedServices.GetSession>();
+            services.AddScoped<Shared.IIdentityService, SharedService>();
         }
     }
 }

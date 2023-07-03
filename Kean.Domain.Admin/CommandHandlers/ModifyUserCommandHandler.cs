@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Kean.Domain.Admin.Commands;
+using Kean.Domain.Admin.Events;
 using Kean.Domain.Admin.Models;
 using Kean.Domain.Admin.Repositories;
 using System.Threading;
@@ -55,6 +56,7 @@ namespace Kean.Domain.Admin.CommandHandlers
                     return;
                 }
                 await _userRepository.Modify(_mapper.Map<User>(command));
+                await _commandBus.Trigger(_mapper.Map<ModifyUserSuccessEvent>(command), cancellationToken);
             }
             else
             {

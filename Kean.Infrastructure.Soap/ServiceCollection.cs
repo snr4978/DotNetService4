@@ -4,18 +4,18 @@ using System.Collections.Generic;
 namespace Kean.Infrastructure.Soap
 {
     /// <summary>
-    /// 服务端集合
+    /// 服务集合
     /// </summary>
-    public sealed class ServerCollection
+    public sealed class ServiceCollection
     {
         private readonly IServiceCollection _services;
         private readonly IList<SoapMapper> _list = new List<SoapMapper>();
 
         /// <summary>
-        /// 初始化 Kean.Infrastructure.Soap.ServerCollection 类的新实例
+        /// 初始化 Kean.Infrastructure.Soap.ServiceCollection 类的新实例
         /// </summary>
         /// <param name="services">服务描述符</param>
-        internal ServerCollection(IServiceCollection services) =>
+        internal ServiceCollection(IServiceCollection services) =>
             _services = services;
 
         /// <summary>
@@ -39,6 +39,7 @@ namespace Kean.Infrastructure.Soap
             where TImplementation : class, TContract
         {
             _services.AddScoped<TContract, TImplementation>();
+            _services.AddScoped<TImplementation>();
             _list.Add(new SoapMapper<TImplementation>());
         }
 

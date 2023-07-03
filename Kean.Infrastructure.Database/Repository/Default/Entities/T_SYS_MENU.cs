@@ -16,14 +16,19 @@ namespace Kean.Infrastructure.Database.Repository.Default.Entities
         public int MENU_PARENT_ID { get; set; }
 
         /// <summary>
-        /// 标题
+        /// 类型
         /// </summary>
-        public string MENU_HEADER { get; set; }
+        public string MENU_TYPE { get; set; }
 
         /// <summary>
-        /// URL
+        /// 名称
         /// </summary>
-        public string MENU_URL { get; set; }
+        public string MENU_NAME { get; set; }
+
+        /// <summary>
+        /// 参数
+        /// </summary>
+        public string MENU_PARAM { get; set; }
 
         /// <summary>
         /// 图标

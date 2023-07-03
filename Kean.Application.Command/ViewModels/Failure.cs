@@ -10,23 +10,16 @@ namespace Kean.Application.Command.ViewModels
         /// <summary>
         /// 根据 FluentValidation.Results.ValidationFailure 创建实例
         /// </summary>
-        public static implicit operator Failure(NotificationEvent @event)
-        {
-            if (@event == null)
+        public static implicit operator Failure(NotificationEvent @event) =>
+            @event == null ?
+            null :
+            new()
             {
-                return null;
-            }
-            else
-            {
-                return new()
-                {
-                    ErrorCode = @event.ErrorCode,
-                    ErrorMessage = @event.ErrorMessage,
-                    PropertyName = @event.PropertyName,
-                    AttemptedValue = @event.AttemptedValue
-                };
-            }
-        }
+                ErrorCode = @event.ErrorCode,
+                ErrorMessage = @event.ErrorMessage,
+                PropertyName = @event.PropertyName,
+                AttemptedValue = @event.AttemptedValue
+            };
 
         /// <summary>
         /// 消息码
@@ -47,5 +40,11 @@ namespace Kean.Application.Command.ViewModels
         /// 属性值
         /// </summary>
         public object AttemptedValue { get; set; }
+
+        /*
+         * 重写 ToString 方法
+         */
+        public override string ToString() =>
+            $"{ErrorMessage}（{PropertyName}：{AttemptedValue}）";
     }
 }
