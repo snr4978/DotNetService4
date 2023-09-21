@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -33,7 +32,7 @@ namespace Kean.Presentation.Rest
         /// <summary>
         /// 获取实例
         /// </summary>
-        private T Service => _backgroundService ??= (_serviceScope = _serviceProvider.CreateScope()).ServiceProvider.GetRequiredService<T>();
+        public T Service => _backgroundService ??= (_serviceScope = _serviceProvider.CreateScope()).ServiceProvider.GetRequiredService<T>();
 
         /*
          * 实现 System.IDisposable.Dispose() 方法
@@ -48,27 +47,19 @@ namespace Kean.Presentation.Rest
         /*
          * 实现 Microsoft.Extensions.Hosting.BackgroundService.StartAsync(CancellationToken cancellationToken) 方法
          */
-        public override async Task StartAsync(CancellationToken cancellationToken)
+        public override Task StartAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Starting BackgroundService {Service}", typeof(T).FullName);
-            if (typeof(T).GetMethod("StartAsync").DeclaringType == typeof(T))
-            {
-                await Service.StartAsync(cancellationToken);
-            }
-            await base.StartAsync(cancellationToken);
+            return Service.StartAsync(cancellationToken);
         }
 
         /*
          * 实现 Microsoft.Extensions.Hosting.BackgroundService.StopAsync(CancellationToken cancellationToken) 方法
          */
-        public override async Task StopAsync(CancellationToken cancellationToken)
+        public override Task StopAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Stopping BackgroundService {Service}", typeof(T).FullName);
-            if (typeof(T).GetMethod("StopAsync").DeclaringType == typeof(T))
-            {
-                await Service.StopAsync(cancellationToken);
-            }
-            await base.StopAsync(cancellationToken);
+            return Service.StopAsync(cancellationToken);
         }
 
         /*
@@ -76,8 +67,7 @@ namespace Kean.Presentation.Rest
          */
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            var executeMethod = typeof(T).GetMethod("ExecuteAsync", BindingFlags.Instance | BindingFlags.NonPublic);
-            return executeMethod.Invoke(Service, new object[] { stoppingToken }) as Task;
+            return Task.CompletedTask;
         }
     }
 }
